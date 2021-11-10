@@ -50,15 +50,18 @@
  [width]
  
  	The minimum number of characters to output.
-	Dynamic width using %* is NOT supported.
+	Dynamic width using %* is NOT supported. A non-standard method of centering text is provided (see below).
 
 
  [.precision]
 
- 	For strings %s %S, this is the maximum number of characters to read from the source.
-	For float %f, this is the number of fractional digits after the '.', valid range is .0 - .8
+ 	For float %f, this is the number of fractional digits after the '.', valid range is .0 - .8
 	For decimal integers, this will prepend 0's (if needed) until the total number of digits equals .precision
 	For binary and hex, this specifies the *exact* number of digits to print, default is based on the argument size.
+	For strings %s %S, This is the maximum number of characters to read from the source.
+
+	Centering strings: If [width] is specified and precision is .0 %s arguments will centered.
+	**Caution - If you are generating formatting strings at runtime, and generate a %[width].0s, you will NOT get 0 characters.
 	Dynamic precision using %.* is NOT supported.
 
  Supported [length]:
@@ -158,4 +161,14 @@ An example for lcd_prnf() may look something like:
 		vfptrprnf(prnf_write_char, NULL, fmt, va);
 		va_end(va);
 	}
+.
+
+# snappf()
+Safely APPEND to a string in a buffer of known size.
+
+	int snappf(char* dst, size_t dst_size, const char* fmtstr, ...);
+
+In addition to the regular snprnf(), which is used for safely printing to a buffer of n bytes. snappf() can safely append to the buffer.
+This is useful in situations where you may need to iterate through a number of fields in a loop. The return value is the number of characters appended (ignoring truncation).
+
 

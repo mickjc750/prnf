@@ -38,13 +38,17 @@
 	' (apostrophe)	No 1000's separator is available
 
  [width] 		The minimum number of characters to output.
-				Dynamic width using %* is NOT supported.
+				Dynamic width using %* is NOT supported, but a non-standard method of centering text is provided (see below).
+				This has no effect on the single character %c type.
 
- [.precision]	For strings %s %S, this is the maximum number of characters to read from the source.
-				For float %f, this is the number of fractional digits after the '.', valid range is .0 - .8
+ [.precision]	For float %f, this is the number of fractional digits after the '.', valid range is .0 - .8
 				For decimal integers, this will prepend 0's (if needed) until the total number of digits equals .precision
 				For binary and hex, this specifies the *exact* number of digits to print, default is based on the argument size.
+				For strings %s %S, This is the maximum number of characters to read from the source.
+				Centering strings: If [width] is specified and precision is .0 %s arguments will centered.
+				**Caution - If you are generating formatting strings at runtime, and generate a %[width].0s, you will NOT get 0 characters.
 				Dynamic precision using %.* is NOT supported.
+				
 
  [length]		Used to specify the size of the argument. The following is supported:
 	hh 			Expect an int-sized argument which was promoted from a char.

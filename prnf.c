@@ -166,6 +166,7 @@
 	static bool is_type_unsigned(uint_least8_t type);
 	static bool is_type_numeric(uint_least8_t type);
 	static bool is_size_long(uint_least8_t size_modifier);
+	static bool is_centered_string(struct placeholder_struct* placeholder);
 	static uint_least8_t sizeof_sizemod(uint_least8_t size_modifier);
 
 	static bool prnf_is_digit(char x);
@@ -775,6 +776,7 @@ static void print_float_special(struct out_struct *out_info, struct placeholder_
 	sign_char = determine_sign_char_of_float(placeholder, value);
 
 	ph.type = TYPE_STR;
+	ph.prec = 1;	// Must be non-0 or prepad/postpad may center the msg which is not what we want
 	msg_len = prnf_strlen(out_msg, false);
 	if(sign_char)
 		msg_len++;
@@ -817,8 +819,8 @@ static void print_str(struct out_struct *out_info, struct placeholder_struct* pl
 
 	source_len = prnf_strlen(str, is_pgm);
 
-	//limit source length to precision
-	if(placeholder->prec_specified && placeholder->prec < source_len)
+	//limit source length to precision, if precision is non0
+	if(placeholder->prec_specified && placeholder->prec && placeholder->prec < source_len)
 		source_len = placeholder->prec;
 
 	prepad(out_info, placeholder, source_len);
@@ -854,8 +856,11 @@ static void prepad(struct out_struct *out_info, struct placeholder_struct* place
 	int pad_len = 0;
 	char pad_char = ' ';
 
+	if(is_centered_string(placeholder) && source_len < placeholder->width)
+		pad_len = (placeholder->width - source_len)/2;
+
 	// if not left aligned, and the required width is longer than the source length
-	if(!placeholder->flag_minus && placeholder->width > source_len)
+	else if(!placeholder->flag_minus && placeholder->width > source_len)
 		pad_len = placeholder->width - source_len;
 
 	// choose prepad character
@@ -871,12 +876,26 @@ static void postpad(struct out_struct *out_info, struct placeholder_struct* plac
 {
 	int pad_len = 0;
 
+	if(is_centered_string(placeholder) && source_len < placeholder->width)
+	{
+		pad_len = (placeholder->width - source_len);
+		if(pad_len & 1)
+			pad_len++;	// round up, prefer larger postpad if unable to center
+		pad_len >>=1;
+	}
+
 	// if left aligned, and the required width is longer than the source length
-	if(placeholder->flag_minus && placeholder->width > source_len)
+	else if(placeholder->flag_minus && placeholder->width > source_len)
 		pad_len = placeholder->width - source_len;
 	
 	while(pad_len--)
 		out(out_info, ' ');
+}
+
+//string type with .precision of 0?
+static bool is_centered_string(struct placeholder_struct* placeholder)
+{
+	return ((placeholder->type == TYPE_STR || placeholder->type == TYPE_PSTR) && placeholder->width && placeholder->prec_specified && placeholder->prec==0);
 }
 
 //return true for only unsigned integer types
