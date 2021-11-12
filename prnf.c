@@ -394,12 +394,10 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 }
 
 // parse textual placeholder information into a placeholder_struct
-static const char* parse_placeholder(struct placeholder_struct* placeholder, const char* fmtstr, bool is_pgm)
+static const char* parse_placeholder(struct placeholder_struct* dst, const char* fmtstr, bool is_pgm)
 {
-	static struct placeholder_struct placeholder_init = {false, false, false, false, false, 0, 0, sizeof(int), TYPE_NONE};
+	struct placeholder_struct placeholder = {false, false, false, false, false, 0, 0, sizeof(int), TYPE_NONE};
 	bool finished;
-
-	*placeholder = placeholder_init;
 
 	//Get flags
 	do
@@ -407,10 +405,10 @@ static const char* parse_placeholder(struct placeholder_struct* placeholder, con
 		finished = false;
 		switch(FMTRD(fmtstr))
 		{
-			case '0': placeholder->flag_zero = true;	break;
-			case '-': placeholder->flag_minus = true;	break;
-			case '+': placeholder->flag_plus = true;    break;
-			case ' ': placeholder->flag_space = true;   break;
+			case '0': placeholder.flag_zero = true;		break;
+			case '-': placeholder.flag_minus = true;	break;
+			case '+': placeholder.flag_plus = true;    	break;
+			case ' ': placeholder.flag_space = true;   	break;
 			case '#': WARN(false);						break;	//unsupported flag
 			case '\'': WARN(false);						break;	//unsupported flag
 			default : finished = true;        			break;
@@ -422,20 +420,20 @@ static const char* parse_placeholder(struct placeholder_struct* placeholder, con
 	//Get width
 	while(prnf_is_digit(FMTRD(fmtstr)))
 	{
-		placeholder->width *=10;
-		placeholder->width += FMTRD(fmtstr)&0x0F;
+		placeholder.width *=10;
+		placeholder.width += FMTRD(fmtstr)&0x0F;
 		fmtstr++;
 	};
 
 	//Get precision
 	if(FMTRD(fmtstr) == '.')
 	{
-		placeholder->prec_specified = true;
+		placeholder.prec_specified = true;
 		fmtstr++;
 		while(prnf_is_digit(FMTRD(fmtstr)))
 		{
-			placeholder->prec *=10;
-			placeholder->prec += FMTRD(fmtstr)&0x0F;
+			placeholder.prec *=10;
+			placeholder.prec += FMTRD(fmtstr)&0x0F;
 			fmtstr++;
 		};
 	};
@@ -447,27 +445,27 @@ static const char* parse_placeholder(struct placeholder_struct* placeholder, con
 			fmtstr++;
 			if(FMTRD(fmtstr) == 'h')
 			{
-				placeholder->size_modifier = sizeof(char);
+				placeholder.size_modifier = sizeof(char);
 				fmtstr++;
 			}
 			else
-				placeholder->size_modifier = sizeof(short);
+				placeholder.size_modifier = sizeof(short);
 			break;
 
 		case 'l' :
 			fmtstr++;
 			ASSERT(FMTRD(fmtstr) != 'l');	//unsupported long long
-			placeholder->size_modifier = sizeof(long);
+			placeholder.size_modifier = sizeof(long);
 			break;
 
 		case 't' :
 			fmtstr++;
-			placeholder->size_modifier = sizeof(ptrdiff_t);
+			placeholder.size_modifier = sizeof(ptrdiff_t);
 			break;
 
 		case 'z' :
 			fmtstr++;
-			placeholder->size_modifier = sizeof(size_t);
+			placeholder.size_modifier = sizeof(size_t);
 			break;
 
 		case 'L' :	//unsupported long double
@@ -480,45 +478,45 @@ static const char* parse_placeholder(struct placeholder_struct* placeholder, con
 	{
 		case 'd' :
 		case 'i' :
-			placeholder->type = TYPE_INT;
+			placeholder.type = TYPE_INT;
 			break;
 		
 		case 'o' :
-			placeholder->type = TYPE_BIN;
+			placeholder.type = TYPE_BIN;
 			break;
 
 		case 'u' :
-			placeholder->type = TYPE_UINT;
+			placeholder.type = TYPE_UINT;
 			break;
 
 		case 'x' :
 		case 'X' :
-			placeholder->type = TYPE_HEX;
+			placeholder.type = TYPE_HEX;
 			break;
 
 #ifdef SUPPORT_FLOAT
 		case 'f' :
 		case 'F' :
-			placeholder->type = TYPE_FLOAT;
+			placeholder.type = TYPE_FLOAT;
 			break;
 
 		case 'e' :
 		case 'E' :
-			placeholder->type = TYPE_ENG;
+			placeholder.type = TYPE_ENG;
 			break;
 #endif
 
 		case 'S' :
 		#ifdef PLATFORM_AVR
-			placeholder->type = TYPE_PSTR;
+			placeholder.type = TYPE_PSTR;
 			break;
 		#endif
 		case 's' :
-			placeholder->type = TYPE_STR;
+			placeholder.type = TYPE_STR;
 			break;
 
 		case 'c' :
-			placeholder->type = TYPE_CHAR;
+			placeholder.type = TYPE_CHAR;
 			break;
 		
 		default :
@@ -527,6 +525,7 @@ static const char* parse_placeholder(struct placeholder_struct* placeholder, con
 	};
 	fmtstr++;
 
+	*dst = placeholder;
 	return fmtstr;
 }
 
