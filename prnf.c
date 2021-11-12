@@ -57,7 +57,6 @@
 	#endif
 
 	enum {TYPE_NONE, TYPE_BIN, TYPE_INT, TYPE_UINT, TYPE_HEX, TYPE_STR, TYPE_PSTR, TYPE_CHAR, TYPE_FLOAT, TYPE_ENG};	// di u xX s S c fF eE
-	enum {FLOAT_CASE_NORMAL, FLOAT_CASE_NAN, FLOAT_CASE_OVER, FLOAT_CASE_INF};
 
 	struct placeholder_struct
 	{
@@ -154,7 +153,7 @@
 
 #ifdef SUPPORT_FLOAT
 	static void print_float(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend);
-	static uint_least8_t determine_float_case(struct placeholder_struct* placeholder, float value);
+	static const char* determine_float_msg(struct placeholder_struct* placeholder, float value);
 	static char determine_sign_char_of_float(struct placeholder_struct* placeholder, float value);
 	static void print_float_normal(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend);
 	static void print_float_special(struct out_struct *out_info, struct placeholder_struct* placeholder, const char* out_msg, float value);
@@ -650,31 +649,19 @@ static void print_hex(struct out_struct *out_info, struct placeholder_struct* pl
 //	With precision of 3 printable range is +/- 4294967.295
 static void print_float(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend)
 {
-	const char* out_msg = NULL;
+	const char* out_msg;
 
-	switch(determine_float_case(placeholder, value))
-	{
-		case FLOAT_CASE_NAN:
-			out_msg = "NAN";
-			break;
-		case FLOAT_CASE_INF:
-			out_msg = "INF";
-			break;
-		case FLOAT_CASE_OVER:
-			out_msg = "OVER";
-			break;
-		case FLOAT_CASE_NORMAL:
-			print_float_normal(out_info, placeholder, value, postpend);
-			break;
-	};
+	out_msg = determine_float_msg(placeholder, value);
 	if(out_msg)
 		print_float_special(out_info, placeholder, out_msg, value);
+	else
+		print_float_normal(out_info, placeholder, value, postpend);
 }
 
 // Return FLOAT_CASE_x
-static uint_least8_t determine_float_case(struct placeholder_struct* placeholder, float value)
+static const char* determine_float_msg(struct placeholder_struct* placeholder, float value)
 {
-	uint_least8_t float_case = FLOAT_CASE_NORMAL;
+	char* retval = NULL;
 	int prec;
 
 	if(value < 0.0F)
@@ -682,12 +669,12 @@ static uint_least8_t determine_float_case(struct placeholder_struct* placeholder
 
 	// Determine special case messages
 	if(value != value)
-		float_case = FLOAT_CASE_NAN;
+		retval = "NAN";
 	else if(value > FLT_MAX)
-		float_case = FLOAT_CASE_INF;
+		retval = "INF";
 
 	// If not NAN or INF
-	if(float_case == FLOAT_CASE_NORMAL)
+	if(!retval)
 	{
 		// Multiply by 10^prec to move fractional digits into the integral digits
 		prec = get_prec(placeholder);
@@ -695,10 +682,10 @@ static uint_least8_t determine_float_case(struct placeholder_struct* placeholder
 
 		// Check within printable range
 		if(value >= (float)ULONG_MAX)
-			float_case = FLOAT_CASE_OVER;
+			retval = "OVER";
 	};
 
-	return float_case;
+	return retval;
 }
 
 static void print_float_normal(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend)
