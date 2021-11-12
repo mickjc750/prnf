@@ -31,6 +31,10 @@
 // Local defines
 //********************************************************************************************************
 
+	#ifndef SIZE_MAX
+		#define SIZE_MAX ((size_t)(ssize_t)(-1))
+	#endif
+
 	#ifdef SUPPORT_FLOAT
 		#include <float.h>
 	#endif
@@ -52,7 +56,6 @@
 		#define FMTRD(_fmt) 	(*(_fmt))
 	#endif
 
-	enum {SIZEMOD_NONE, SIZEMOD_CHAR, SIZEMOD_SHORT, SIZEMOD_LONG, SIZEMOD_PTRDIFF, SIZEMOD_SIZE};
 	enum {TYPE_NONE, TYPE_BIN, TYPE_INT, TYPE_UINT, TYPE_HEX, TYPE_STR, TYPE_PSTR, TYPE_CHAR, TYPE_FLOAT, TYPE_ENG};	// di u xX s S c fF eE
 	enum {FLOAT_CASE_NORMAL, FLOAT_CASE_NAN, FLOAT_CASE_OVER, FLOAT_CASE_INF};
 
@@ -65,7 +68,7 @@
 		bool 	prec_specified;
 		int 	width;
 		int 	prec;
-		uint_least8_t size_modifier;	//SIZEMOD_x
+		uint_least8_t size_modifier;	//equal to size of int, or size of specified type (l h hh etc)
 		uint_least8_t type;				//TYPE_x
 	};
 
@@ -165,7 +168,6 @@
 	static bool is_type_int(uint_least8_t type);
 	static bool is_type_unsigned(uint_least8_t type);
 	static bool is_type_numeric(uint_least8_t type);
-	static bool is_size_long(uint_least8_t size_modifier);
 	static bool is_centered_string(struct placeholder_struct* placeholder);
 	static uint_least8_t sizeof_sizemod(uint_least8_t size_modifier);
 
@@ -328,7 +330,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 					//read long or int unsigned
 					if(is_type_unsigned(placeholder.type))
 					{
-						if(is_size_long(placeholder.size_modifier))
+						if(placeholder.size_modifier == sizeof(long))
 							uvalue = va_arg(va, unsigned long);
 						else
 							uvalue = (unsigned long)va_arg(va, unsigned int);
@@ -336,7 +338,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 					else
 					//read long or int signed
 					{
-						if(is_size_long(placeholder.size_modifier))
+						if(placeholder.size_modifier == sizeof(long))
 							value = va_arg(va, long);
 						else
 							value = (long)va_arg(va, int);
@@ -394,7 +396,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 // parse textual placeholder information into a placeholder_struct
 static const char* parse_placeholder(struct placeholder_struct* placeholder, const char* fmtstr, bool is_pgm)
 {
-	static struct placeholder_struct placeholder_init = {false, false, false, false, false, 0, 0, SIZEMOD_NONE, TYPE_NONE};
+	static struct placeholder_struct placeholder_init = {false, false, false, false, false, 0, 0, sizeof(int), TYPE_NONE};
 	bool finished;
 
 	*placeholder = placeholder_init;
@@ -445,27 +447,27 @@ static const char* parse_placeholder(struct placeholder_struct* placeholder, con
 			fmtstr++;
 			if(FMTRD(fmtstr) == 'h')
 			{
-				placeholder->size_modifier = SIZEMOD_CHAR;
+				placeholder->size_modifier = sizeof(char);
 				fmtstr++;
 			}
 			else
-				placeholder->size_modifier = SIZEMOD_SHORT;
+				placeholder->size_modifier = sizeof(short);
 			break;
 
 		case 'l' :
 			fmtstr++;
 			ASSERT(FMTRD(fmtstr) != 'l');	//unsupported long long
-			placeholder->size_modifier = SIZEMOD_LONG;
+			placeholder->size_modifier = sizeof(long);
 			break;
 
 		case 't' :
 			fmtstr++;
-			placeholder->size_modifier = SIZEMOD_PTRDIFF;
+			placeholder->size_modifier = sizeof(ptrdiff_t);
 			break;
 
 		case 'z' :
 			fmtstr++;
-			placeholder->size_modifier = SIZEMOD_SIZE;
+			placeholder->size_modifier = sizeof(size_t);
 			break;
 
 		case 'L' :	//unsupported long double
@@ -603,7 +605,7 @@ static void print_bin(struct out_struct *out_info, struct placeholder_struct* pl
 	if(placeholder->prec_specified)
 		number_len = placeholder->prec;
 	else
-		number_len = sizeof_sizemod(placeholder->size_modifier) * 8;
+		number_len = placeholder->size_modifier * 8;
 
 	//prepad number length to satisfy width  (if specified)
 	prepad(out_info, placeholder, number_len);
@@ -628,7 +630,7 @@ static void print_hex(struct out_struct *out_info, struct placeholder_struct* pl
 	if(placeholder->prec_specified)
 		number_len = placeholder->prec;
 	else
-		number_len = sizeof_sizemod(placeholder->size_modifier) * 2;
+		number_len = placeholder->size_modifier * 2;
 
 	//prepad number length to satisfy width  (if specified)
 	prepad(out_info, placeholder, number_len);
@@ -916,50 +918,9 @@ static bool is_type_numeric(uint_least8_t type)
 	return 	(type==TYPE_BIN || type==TYPE_INT || type==TYPE_UINT || type==TYPE_HEX || type==TYPE_FLOAT || type==TYPE_ENG);
 }
 
-static bool is_size_long(uint_least8_t size_modifier)
-{
-	bool is_long = false;
-
-	if(size_modifier == SIZEMOD_SIZE)
-	{
-		if(sizeof(size_t) == sizeof(long))
-			is_long = true;
-		else
-			ASSERT(sizeof(size_t) == sizeof(int));		// unsupported size_t bigger than long
-	}
-	else if(size_modifier == SIZEMOD_PTRDIFF)
-	{
-		if(sizeof(ptrdiff_t) == sizeof(long))
-			is_long = true;
-		else
-			ASSERT(sizeof(ptrdiff_t) == sizeof(int));	// unsupported size_t bigger than long
-	}
-	else if(size_modifier == SIZEMOD_LONG)
-		is_long = true;
-	return is_long;
-}
-
 static bool prnf_is_digit(char x)
 {
 	return ('0' <=x && x <= '9');
-}
-
-static uint_least8_t sizeof_sizemod(uint_least8_t size_modifier)
-{
-	uint_least8_t retval = sizeof(int);
-
-	if(size_modifier == SIZEMOD_CHAR)
-		retval = sizeof(char);
-	else if (size_modifier == SIZEMOD_LONG)
-		retval = sizeof(long);
-	else if (size_modifier == SIZEMOD_PTRDIFF)
-		retval = sizeof(ptrdiff_t);
-	else if (size_modifier == SIZEMOD_SHORT)
-		retval = sizeof(short);
-	else if (size_modifier == SIZEMOD_SIZE)
-		retval = sizeof(size_t);
-
-	return retval;
 }
 
 static char ascii_hex_digit(uint_least8_t x)
