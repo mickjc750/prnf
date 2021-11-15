@@ -297,10 +297,16 @@ static char fmt_rd_either(const char* fmt, bool is_pgm)
 static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va)
 {
 	struct placeholder_struct placeholder;
-	long value = 0;
-	unsigned long uvalue = 0;
+
+	union
+	{
+		long l;
+		unsigned long ul;
+		int i;
+		unsigned int ui;
+	} value;
+
 	#ifdef SUPPORT_FLOAT
-		float fvalue;
 		struct eng_struct eng;
 	#endif
 
@@ -326,35 +332,26 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 				//integer type? (int uint bin hex size_t ptrdiff_t)
 				if(is_type_int(placeholder.type))
 				{
-					//read long or int unsigned
-					if(is_type_unsigned(placeholder.type))
-					{
-						if(placeholder.size_modifier == sizeof(long))
-							uvalue = va_arg(va, unsigned long);
-						else
-							uvalue = (unsigned long)va_arg(va, unsigned int);
-					}
+					if(placeholder.size_modifier == sizeof(long))
+						value.ul = va_arg(va, unsigned long);	
 					else
-					//read long or int signed
 					{
-						if(placeholder.size_modifier == sizeof(long))
-							value = va_arg(va, long);
+						value.ui = va_arg(va, unsigned int);	
+						if(is_type_unsigned(placeholder.type))
+							value.ul = value.ui;
 						else
-							value = (long)va_arg(va, int);
+							value.l = value.i;
 					};
 				};
 
-				if(placeholder.type == TYPE_INT)
-					print_dec(out_info, &placeholder, value);
+				if(placeholder.type == TYPE_INT || placeholder.type == TYPE_UINT)
+					print_dec(out_info, &placeholder, value.l);
 				
-				else if(placeholder.type == TYPE_UINT)
-					print_dec(out_info, &placeholder, (long)uvalue);
-
 				else if(placeholder.type == TYPE_BIN)
-					print_bin(out_info, &placeholder, uvalue);
+					print_bin(out_info, &placeholder, value.ul);
 							
 				else if(placeholder.type == TYPE_HEX)
-					print_hex(out_info, &placeholder, uvalue);
+					print_hex(out_info, &placeholder, value.ul);
 
 #ifdef SUPPORT_FLOAT
 				else if(placeholder.type == TYPE_FLOAT)
@@ -362,8 +359,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 
 				else if(placeholder.type == TYPE_ENG)
 				{	
-					fvalue = (float)va_arg(va, double);
-					eng = get_eng(fvalue);
+					eng = get_eng((float)va_arg(va, double));
 					print_float(out_info, &placeholder, eng.value, eng.prefix);
 				}
 #endif
