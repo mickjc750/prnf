@@ -834,7 +834,7 @@ static int prnf_strlen(const char* str, bool is_pgm)
 	return retval;
 }
 
-// prepad the output to acheive width, if needed
+// prepad the output to achieve width, if needed
 static void prepad(struct out_struct *out_info, struct placeholder_struct* placeholder, size_t source_len)
 {
 	int pad_len = 0;
@@ -855,7 +855,7 @@ static void prepad(struct out_struct *out_info, struct placeholder_struct* place
 		out(out_info, pad_char);
 }
 
-// postpad the output to acheive width, if needed
+// postpad the output to achieve width, if needed
 static void postpad(struct out_struct *out_info, struct placeholder_struct* placeholder, size_t source_len)
 {
 	int pad_len = 0;
