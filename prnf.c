@@ -61,9 +61,8 @@
 	struct placeholder_struct
 	{
 		bool	flag_minus;
-		bool	flag_plus;
-		bool	flag_space;
 		bool	flag_zero;
+		char 	sign_pad;			//'+' or ' ' if a prepend character for positive numeric types is specified. Otherwise 0
 		bool 	prec_specified;
 		int 	width;
 		int 	prec;
@@ -391,7 +390,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 // parse textual placeholder information into a placeholder_struct
 static const char* parse_placeholder(struct placeholder_struct* dst, const char* fmtstr, bool is_pgm)
 {
-	struct placeholder_struct placeholder = {false, false, false, false, false, 0, 0, sizeof(int), TYPE_NONE};
+	struct placeholder_struct placeholder = {false, false, 0, false, 0, 0, sizeof(int), TYPE_NONE};
 	bool finished;
 
 	//Get flags
@@ -402,8 +401,8 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 		{
 			case '0': placeholder.flag_zero = true;		break;
 			case '-': placeholder.flag_minus = true;	break;
-			case '+': placeholder.flag_plus = true;    	break;
-			case ' ': placeholder.flag_space = true;   	break;
+			case '+': placeholder.sign_pad = '+';  	break;
+			case ' ': placeholder.sign_pad = ' ';  	break;
 			case '#': WARN(false);						break;	//unsupported flag
 			case '\'': WARN(false);						break;	//unsupported flag
 			default : finished = true;        			break;
@@ -545,10 +544,8 @@ static void print_dec(struct out_struct *out_info, struct placeholder_struct* pl
 			sign_char = '-';
 			uvalue = -value;
 		}
-		else if(placeholder->flag_plus)
-			sign_char = '+';
-		else if(placeholder->flag_space)
-			sign_char = ' ';
+		else if(placeholder->sign_pad)
+			sign_char = placeholder->sign_pad;
 	};
 
 	//determine number of digits
@@ -786,10 +783,8 @@ static char determine_sign_char_of_float(struct placeholder_struct* placeholder,
 		sign_char = '-';
 	else if(!nan)
 	{
-		if(placeholder->flag_plus)
-			sign_char = '+';
-		else if (placeholder->flag_space)
-			sign_char = ' ';
+		if(placeholder->sign_pad)
+			sign_char = placeholder->sign_pad;
 	};
 
 	return sign_char;
