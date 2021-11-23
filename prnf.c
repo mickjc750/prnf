@@ -401,8 +401,8 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 		{
 			case '0': placeholder.flag_zero = true;		break;
 			case '-': placeholder.flag_minus = true;	break;
-			case '+': placeholder.sign_pad = '+';  	break;
-			case ' ': placeholder.sign_pad = ' ';  	break;
+			case '+': placeholder.sign_pad = '+';  		break;
+			case ' ': placeholder.sign_pad = ' ';  		break;
 			case '#': WARN(false);						break;	//unsupported flag
 			case '\'': WARN(false);						break;	//unsupported flag
 			default : finished = true;        			break;
@@ -842,10 +842,12 @@ static void prepad(struct out_struct *out_info, struct placeholder_struct* place
 	else if(!placeholder->flag_minus && placeholder->width > source_len)
 		pad_len = placeholder->width - source_len;
 
-	// choose prepad character
-	if(is_type_numeric(placeholder->type) && placeholder->flag_zero && !placeholder->prec_specified)
-		pad_char = '0';
-	
+	// prepad character of '0' is specified for a numeric type
+	if(is_type_numeric(placeholder->type) && placeholder->flag_zero)
+		//(the zero flag is ignored if precision is specified for an integer type).
+		if(!(placeholder->prec_specified && is_type_int(placeholder->type)))
+			pad_char = '0';
+
 	while(pad_len--)
 		out(out_info, pad_char);
 }
