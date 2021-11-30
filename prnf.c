@@ -22,14 +22,23 @@
 //********************************************************************************************************
 
 	#define SUPPORT_FLOAT
-
 	#define ENG_PREC_DEFAULT 	0
-
 	#define FLOAT_PREC_DEFAULT 	3
 
 //********************************************************************************************************
 // Local defines
 //********************************************************************************************************
+
+	#if ULONG_MAX == 4294967295
+		#define DEC_BUF_SIZE 	10
+		#define FLOAT_PREC_MAX	9
+		#define LONG_IS_32
+	#elif ULONG_MAX == 18446744073709551615
+		#define DEC_BUF_SIZE 	20
+		#define FLOAT_PREC_MAX	19
+	#else
+		#error Long is not 32bit or 64bit
+	#endif
 
 	#ifndef SIZE_MAX
 		#define SIZE_MAX ((size_t)(ssize_t)(-1))
@@ -38,9 +47,6 @@
 	#ifdef SUPPORT_FLOAT
 		#include <float.h>
 	#endif
-
-//	Should =< the number of decimal digits which can be represented by an un signed long
-	#define FLOAT_PREC_MAX		8
 
 	#ifndef WARN
 		#define WARN(arg) ((void)(0))
@@ -134,7 +140,11 @@
 
 #ifdef FIRST_PASS
 #ifdef SUPPORT_FLOAT
-	static float pow10_tbl[FLOAT_PREC_MAX+1] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F};
+	#ifdef LONG_IS_32
+		static float pow10_tbl[10] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F};
+	#else
+		static float pow10_tbl[20] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F, 1E10F, 1E11F, 1E12F, 1E13F, 1E14F, 1E15F, 1E16F, 1E17F, 1E18F, 1E19F};
+	#endif
 #endif
 #endif
 
@@ -167,11 +177,12 @@
 	static bool is_type_unsigned(uint_least8_t type);
 	static bool is_type_numeric(uint_least8_t type);
 	static bool is_centered_string(struct placeholder_struct* placeholder);
-	static uint_least8_t sizeof_sizemod(uint_least8_t size_modifier);
 
 	static bool prnf_is_digit(char x);
 	static char ascii_hex_digit(uint_least8_t x);
 	
+	static uint_least8_t ulong2asc_rev(char* buf, unsigned long i);
+
 	static void out(struct out_struct *out_info, char x);
 	static void out_buf(void* out_buf_vars, char x);
 
@@ -182,7 +193,7 @@
 		static char fmt_rd_either(const char* fmt, bool is_pgm);
 	#endif
 
-#endif
+#endif //FIRST_PASS
 
 //********************************************************************************************************
 // Public functions
@@ -303,7 +314,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 		unsigned long ul;
 		int i;
 		unsigned int ui;
-	} value;
+	} value = {.ul = 0ul};
 
 	#ifdef SUPPORT_FLOAT
 		struct eng_struct eng;
@@ -527,12 +538,11 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 static void print_dec(struct out_struct *out_info, struct placeholder_struct* placeholder, long value)
 {
 	unsigned long uvalue;
-	unsigned long remainder;
 	int number_len = 1;
 	int zero_pad_len = 0;
-	unsigned long weight = 1;
 	char sign_char = 0;
-	uint_least8_t digit;
+	char txt[DEC_BUF_SIZE];
+	char *txt_ptr;
 
 	if(is_type_unsigned(placeholder->type))
 		uvalue = (unsigned long)value;
@@ -548,14 +558,8 @@ static void print_dec(struct out_struct *out_info, struct placeholder_struct* pl
 			sign_char = placeholder->sign_pad;
 	};
 
-	//determine number of digits
-	remainder = uvalue;
-	while(uvalue >= 10)
- 	{
-		uvalue /=10;
-		weight *=10;
-		number_len++;
- 	};
+	number_len = ulong2asc_rev(txt, uvalue);
+	txt_ptr = &txt[number_len];
 
 	//if more digits required, determine amount of zero padding
 	if(placeholder->prec_specified && placeholder->prec > number_len)
@@ -577,11 +581,9 @@ static void print_dec(struct out_struct *out_info, struct placeholder_struct* pl
 		out(out_info, '0');
 	do
 	{
-		digit = remainder / weight;
-		remainder = remainder % weight;
-		out(out_info, (char)(0x30+digit));
-		weight /=10;
-	}while(weight);
+		txt_ptr--;
+		out(out_info, *txt_ptr);
+	}while(txt_ptr != txt);
 
 	//postpad number length to satisfy width  (if specified)
 	postpad(out_info, placeholder, number_len);
@@ -687,10 +689,9 @@ static void print_float_normal(struct out_struct *out_info, struct placeholder_s
 	uint_least8_t number_len = 1;
 	uint_least8_t radix_pos = -1;
 	unsigned long uvalue;
-	unsigned long weight = 1;
-	unsigned long remainder;
-	uint_least8_t digit;
 	char sign_char;
+	char txt[DEC_BUF_SIZE];
+	char* txt_ptr;
 
 	sign_char = determine_sign_char_of_float(placeholder, value);
 
@@ -701,14 +702,16 @@ static void print_float_normal(struct out_struct *out_info, struct placeholder_s
 		value = -value;
 	value *= pow10_tbl[prec];
 	uvalue = round_float_to_ulong(value);
-	remainder = uvalue;
 
 	//determine number of digits
-	while(uvalue >= 10 || (number_len < prec+1))
+	number_len = ulong2asc_rev(txt, uvalue);
+	txt_ptr = &txt[number_len];
+
+	//minimum number of digits is .precision +1 as we always print a 0 on the left of the decimal point
+	while(number_len < prec+1)
 	{
-		uvalue /=10;
-		weight *=10;
 		number_len++;
+		*txt_ptr++ = '0';
 	};
 
 	if(prec)
@@ -733,11 +736,9 @@ static void print_float_normal(struct out_struct *out_info, struct placeholder_s
 	{
 		if(radix_pos-- == 0)
 			out(out_info, '.');
-		digit = remainder / weight;
-		remainder = remainder % weight;
-		out(out_info, (char)(0x30+digit));
-		weight /=10;
-	}while(weight);
+		txt_ptr--;
+		out(out_info, *txt_ptr);
+	}while(txt_ptr != txt);
 
 	if(postpend)
 		out(out_info, postpend);
@@ -950,7 +951,11 @@ static uint_least8_t get_prec(struct placeholder_struct* placeholder)
 	else
 	 	prec = FLOAT_PREC_DEFAULT;
 
-	ASSERT(prec <= FLOAT_PREC_MAX);
+	if(prec > FLOAT_PREC_MAX)
+	{
+		ASSERT(false);
+		prec = FLOAT_PREC_MAX;	//limit precision if no assertion handler is available
+	};
 
 	return prec;
 }
@@ -967,6 +972,21 @@ static unsigned long round_float_to_ulong(float x)
 	return retval;
 }
 #endif  //^SUPPORT_FLOAT^
+
+//convert unsigned long to decimal reversed
+static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
+{
+	uint_least8_t digit_count = 0;
+
+	do
+	{
+		*buf++ = '0' + (i % 10);
+		i = i / 10;
+		digit_count++;
+	}while(i);
+
+	return digit_count;
+}
 
 // Per-character output processing
 // Counts output characters (regardless of truncation)
@@ -992,7 +1012,7 @@ static void out_buf(void* out_buf_vars, char x)
 	(*dst)++;
 }
 
-#endif
+#endif //FIRST_PASS
 
 
 // Compile _P version for PROGMEM access

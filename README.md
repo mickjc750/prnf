@@ -9,7 +9,7 @@
  Particularly the function pointer output from mpaland, and the output wrapping used in this was suggested by eyalroz.
  
  * Thread and re-enterant safe.
- * Low stack & ram usage, zero heap usage, no text buffers needed for numeric output.
+ * Low stack & ram usage, zero heap usage.
  * Full support for AVR's PROGMEM requirements, with almost no cost to non-AVR targets.
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
  * no double or 64bit arithmetic, (doubles get demoted to float internally).
