@@ -163,14 +163,14 @@
 	#define sprnf_SL(_dst, _fmtarg, ...) 				({int _prv; _prv = sprnf_P(_dst, PSTR(_fmtarg) ,##__VA_ARGS__); while(0) fmttst_optout(_fmtarg ,##__VA_ARGS__); _prv;})
 	#define snprnf_SL(_dst, _dst_size, _fmtarg, ...) 	({int _prv; _prv = snprnf_P(_dst, _dst_size, PSTR(_fmtarg) ,##__VA_ARGS__); while(0) fmttst_optout(_fmtarg ,##__VA_ARGS__); _prv;})
 	#define snappf_SL(_dst, _dst_size, _fmtarg, ...) 	({int _prv; _prv = snappf_P(_dst, _dst_size, PSTR(_fmtarg) ,##__VA_ARGS__); while(0) fmttst_optout(_fmtarg ,##__VA_ARGS__); _prv;})
-	#define fptrprnf_SL(_fptr, _fargs, _fmtarg, ...) 	({int _prv; _prv = fctprnf_P(_fptr, _fargs, PSTR(_fmtarg) ,##__VA_ARGS__); while(0) fmttst_optout(_fmtarg ,##__VA_ARGS__); _prv;})
+	#define fptrprnf_SL(_fptr, _fargs, _fmtarg, ...) 	({int _prv; _prv = fptrprnf_P(_fptr, _fargs, PSTR(_fmtarg) ,##__VA_ARGS__); while(0) fmttst_optout(_fmtarg ,##__VA_ARGS__); _prv;})
 	#define PRNF_ARG_SL(_arg)							((wchar_t*)PSTR(_arg))
 #else
 	#define prnf_SL(_fmtarg, ...) 						prnf(_fmtarg ,##__VA_ARGS__)
 	#define sprnf_SL(_dst, _fmtarg, ...) 				sprnf(_dst, _fmtarg ,##__VA_ARGS__)
 	#define snprnf_SL(_dst, _dst_size, _fmtarg, ...) 	snprnf(_dst, _dst_size, _fmtarg ,##__VA_ARGS__)
 	#define snappf_SL(_dst, _dst_size, _fmtarg, ...) 	snappf(_dst, _dst_size, _fmtarg ,##__VA_ARGS__)
-	#define fptrprnf_SL(_fptr, _fargs, _fmtarg, ...)	fctprnf(_fptr, _fargs, _fmtarg ,##__VA_ARGS__)
+	#define fptrprnf_SL(_fptr, _fargs, _fmtarg, ...)	fptrprnf(_fptr, _fargs, _fmtarg ,##__VA_ARGS__)
 	#define PRNF_ARG_SL(_arg)							((wchar_t*)(_arg))
 #endif
 
