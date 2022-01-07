@@ -33,7 +33,7 @@
 
 	- 			left align the output
 	 
-	+ 			prepends a + for positive numeric types
+	+			prepends a + for positive numeric types
 	 
 	(space)		prepends a space for positive numeric type
 
@@ -96,7 +96,7 @@
 				Values outside this range will produce "OVER".
 				A value of 0.0 is always positive. 
 
-	e 			NOT exponential. Floating point with engineering notaion (y z a f p n u m - k M G T P E Z Y).
+	e			NOT exponential. Floating point with engineering notaion (y z a f p n u m - k M G T P E Z Y).
 				Number is postpended with the SI prefix. Default precision is 0.
  
 
@@ -107,7 +107,8 @@
 	p			Pointer not available
 	n			not available
 
-.
+<br>
+<br>
 
  # AVR's PROGMEM support:
 The symbol PLATFORM_AVR must be defined, either before including prnf.h, or preferably by adding -DPLATFORM_AVR to compiler options.
@@ -117,16 +118,63 @@ these will place string literals in PROGMEM for AVR targets and produce normal s
 
 
 On AVR, both the the format sring, and string arguments, may be in either ram or program memory. See the header for more detailed useage.
+   
+<br>
+<br>
+   
+# Default output for prnf()
 
-.
+Create a function which handles a single character, in the following form:
+
+	void my_character_handler(void* x, char c)  
+	{  
+		(void)x;	// As x is not used, this line may be needed to avoid a compiler warning.  
+		// Do stuff here to output character c, ie. write to uart ect.  
+	}  
+
+  
+Then at the start of your program assign the default prnf() output to the above handler with:
+
+	prnf_out_fptr = my_character_handler;
+
+<br>
+<br>
+
+# Specifying the output handler when calling prnf()
+
+A non-standard function is available which can be used for stream-like printing to different destinations.
+
+	int fptrprnf(void(*out_fptr)(void*, char), void* out_vars, const char* fmtstr, ...);
+
+So to print to the above example of my_character_handler:
+
+	fptrprnf(mycharacter_handler, NULL, "Hello Fred is %i years old\n", freds_age);
+
+If you have specific information to pass to your character handler, you can pass the address of it instead of NULL, and it will be passed to the void* x in my_character_handler.
+
+<br>
+<br>
 
 # Replacing printf()
 
-If you intend to override printf() this can be done with macros. Be aware that after you define 'printf' you will break anything which tries to add the format checking attribute __attribute__((format(printf, 1, 2)))
+Firstly, I would advise NOT doing this. Another reader of your code may see printf() and expect it to behave exactly like the standard printf(). If you return to your code to make changes in 5 years, that other programmer may be you.
+
+If you still intend to override printf() this can be done with macros. Be aware that after you define 'printf' you will break anything which tries to add the format checking attribute __attribute__((format(printf, 1, 2)))
 
 Another approach is to use GCC's --wrap feature in the compiler flags, which is probably better.
 
-.
+<br>
+<br>
+
+# Printing to text buffers
+
+The usual functions are available (with print shortened to prn), and return a character count (disregarding any truncation).
+
+	int sprnf(char* buffer, const char* format, ...) 
+	int snprnf(char* buffer, size_t buffer_size, const char* format, ...) 
+
+<br>
+<br>
 
 # Example debug macro:
 The following is useful for debug/diagnostic and cross platform friendly with AVR:
@@ -138,19 +186,24 @@ Example usage:
 	DBG("value is %i\n", 51);
 The above will output something like "main.c:0113 - value is 51"
 
-Note that even if you use this on many lines, the __FILE__ string literal will only occur once in the string pool.
+Note that even if you use this on many lines, the __FILE__ string literal will only occur once in the string pool. So it won't eat up all your program memory space.
 
-.
+<br>
+<br>
 
 # Adding prnf() functionality to other IO modules:
 
-This can be achieved by writing your own character handler, and variadic function for the module.
+This can easily be achieved by writing your own character handler, and variadic function for the module.
+Then the variadic version of fptrprnf (vfptrprnf) can be used to print to your character handler.
+
 An example for lcd_prnf() may look something like:
+
+	#include <stdarg.h>
 
 	// LCD prnf character handler
 	static void prnf_write_char(void* nothing, char x)
 	{
-		lcd_data(x);
+		lcd_data(x); // (function or code to write a single character to the LCD)
 	}
 
 	// formatted print to LCD
@@ -161,7 +214,9 @@ An example for lcd_prnf() may look something like:
 		vfptrprnf(prnf_write_char, NULL, fmt, va);
 		va_end(va);
 	}
-.
+
+<br>
+<br>
 
 # snappf()
 Safely APPEND to a string in a buffer of known size.
@@ -171,4 +226,10 @@ Safely APPEND to a string in a buffer of known size.
 In addition to the regular snprnf(), which is used for safely printing to a buffer of n bytes. snappf() can safely append to the buffer.
 This is useful in situations where you may need to iterate through a number of fields in a loop. The return value is the number of characters appended (ignoring truncation).
 
+<br>
+<br>
 
+# Issues
+
+Please raise an issue if you find a bug (unlikely), or even if you find any of the above instuctions confusing.
+I'm willing to help.
