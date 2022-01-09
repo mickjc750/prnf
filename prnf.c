@@ -25,8 +25,9 @@
 	#define ENG_PREC_DEFAULT 	0
 	#define FLOAT_PREC_DEFAULT 	3
 
-	#define SUPPORT_EXTENSIONS
-	#define prnf_free(arg) 	free(arg)
+//	#define SUPPORT_EXTENSIONS
+//	#include <stdlib.h>
+//	#define prnf_free(arg) 	free(arg)
 
 //********************************************************************************************************
 // Local defines
@@ -393,7 +394,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 				#ifdef SUPPORT_EXTENSIONS
 				else if(placeholder.type == TYPE_NSTR)
 				{
-					print_str(out_info, &placeholder, (charptr = va_arg(va, char*)), false);
+					print_str(out_info, &placeholder, (charptr=(char*)va_arg(va, int*)), false);
 					prnf_free(charptr);
 				};
 				#endif
@@ -537,6 +538,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 		#ifdef SUPPORT_EXTENSIONS
 		case 'n' :
 			placeholder.type = TYPE_NSTR;
+			break;
 		#endif
 
 		case 'c' :
