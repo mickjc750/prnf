@@ -25,9 +25,13 @@
 	#define ENG_PREC_DEFAULT 	0
 	#define FLOAT_PREC_DEFAULT 	3
 
+	#define SUPPORT_EXTENSIONS
+	#define prnf_free(arg) 	free(arg)
+
 //********************************************************************************************************
 // Local defines
 //********************************************************************************************************
+
 
 	#if ULONG_MAX == 4294967295
 		#define DEC_BUF_SIZE 	10
@@ -62,7 +66,7 @@
 		#define FMTRD(_fmt) 	(*(_fmt))
 	#endif
 
-	enum {TYPE_NONE, TYPE_BIN, TYPE_INT, TYPE_UINT, TYPE_HEX, TYPE_STR, TYPE_PSTR, TYPE_CHAR, TYPE_FLOAT, TYPE_ENG};	// di u xX s S c fF eE
+	enum {TYPE_NONE, TYPE_BIN, TYPE_INT, TYPE_UINT, TYPE_HEX, TYPE_STR, TYPE_PSTR, TYPE_NSTR, TYPE_CHAR, TYPE_FLOAT, TYPE_ENG};	// di u xX s S c fF eE
 
 	struct placeholder_struct
 	{
@@ -307,6 +311,9 @@ static char fmt_rd_either(const char* fmt, bool is_pgm)
 static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va)
 {
 	struct placeholder_struct placeholder;
+	#ifdef SUPPORT_EXTENSIONS
+	char* charptr;
+	#endif
 
 	union
 	{
@@ -382,6 +389,13 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 				#ifdef PLATFORM_AVR
 				else if(placeholder.type == TYPE_PSTR)
 					print_str(out_info, &placeholder, va_arg(va, char*), true);
+				#endif
+				#ifdef SUPPORT_EXTENSIONS
+				else if(placeholder.type == TYPE_NSTR)
+				{
+					print_str(out_info, &placeholder, (charptr = va_arg(va, char*)), false);
+					prnf_free(charptr);
+				};
 				#endif
 			};
 		}
@@ -519,6 +533,11 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 		case 's' :
 			placeholder.type = TYPE_STR;
 			break;
+
+		#ifdef SUPPORT_EXTENSIONS
+		case 'n' :
+			placeholder.type = TYPE_NSTR;
+		#endif
 
 		case 'c' :
 			placeholder.type = TYPE_CHAR;
