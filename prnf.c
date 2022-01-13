@@ -96,6 +96,10 @@
 		char prefix;
 	};
 
+	#ifdef SUPPORT_EXTENSIONS
+	#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders."
+	#endif
+
 #endif	//FIRST PASS
 
 #ifdef FIRST_PASS
