@@ -83,9 +83,9 @@
 
 	struct out_struct
 	{
-		bool	terminate;
-		size_t	size_limit;
 		int		char_cnt;
+		size_t	size_limit;
+		char* 	buf;
 		void* 	dst_fptr_vars;
 		void(*dst_fptr)(void*, char);
 	};
@@ -194,7 +194,6 @@
 
 	static void out_char(struct out_struct *out_info, char x);
 	static void out_terminate(struct out_struct *out_info);
-	static void out_buf(void* out_buf_vars, char x);
 
 	static void print_str(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm);
 	static int prnf_strlen(const char* str, bool is_pgm);
@@ -277,25 +276,25 @@ int fptrprnf_PX(void(*out_fptr)(void*, char), void* out_vars, const char* fmtstr
 
 int vprnf_PX(const char* fmtstr, va_list va)
 {
-	struct out_struct out_info = {.terminate=false, .size_limit=SIZE_MAX, .char_cnt=0, .dst_fptr_vars=NULL, .dst_fptr=prnf_out_fptr};
+	struct out_struct out_info = {.dst_fptr = prnf_out_fptr};
 	return core_prnf(&out_info, fmtstr, IS_SECOND_PASS, va);
 }
 
 int vsprnf_PX(char* dst, const char* fmtstr, va_list va)
 {
-	struct out_struct out_info = {.terminate=true, .size_limit=SIZE_MAX, .char_cnt=0, .dst_fptr_vars=&dst, .dst_fptr=out_buf};
+	struct out_struct out_info = {.size_limit=SIZE_MAX, .buf=dst};
 	return core_prnf(&out_info, fmtstr, IS_SECOND_PASS, va);
 }
 
 int vsnprnf_PX(char* dst, size_t dst_size, const char* fmtstr, va_list va)
 {
-	struct out_struct out_info = {.terminate=true, .size_limit=dst_size, .char_cnt=0, .dst_fptr_vars=&dst, .dst_fptr=out_buf};
+	struct out_struct out_info = {.size_limit=dst_size, .buf=dst};
 	return core_prnf(&out_info, fmtstr, IS_SECOND_PASS, va);
 }
 
 int vfptrprnf_PX(void(*out_fptr)(void*, char), void* out_vars, const char* fmtstr, va_list va)
 {
-	struct out_struct out_info = {.terminate=false, .size_limit=SIZE_MAX, .char_cnt=0, .dst_fptr_vars=out_vars, .dst_fptr=out_fptr};
+	struct out_struct out_info = {.dst_fptr_vars=out_vars, .dst_fptr=out_fptr};
 	return core_prnf(&out_info, fmtstr, IS_SECOND_PASS, va);
 }
 
@@ -1016,27 +1015,24 @@ static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
 
 // Per-character output processing
 // Counts output characters (regardless of truncation)
-// Calls function pointer to destinations character output.
-// Truncates output
+// Calls function pointer to destinations character output OR writes to buffer
+// Truncates buffer output
 static void out_char(struct out_struct *out_info, char x)
 {
-	if(out_info->char_cnt+1 < out_info->size_limit && out_info->dst_fptr)
+	if(out_info->buf && out_info->char_cnt+1 < out_info->size_limit)
+		*(out_info->buf++) = x;
+
+	else if(out_info->dst_fptr)
 		out_info->dst_fptr(out_info->dst_fptr_vars, x);
+
 	out_info->char_cnt++;
 }
 
-// possibly terminates output, (depending on out_info->terminate)
+// possibly terminates output
 static void out_terminate(struct out_struct *out_info)
 {
-	if(out_info->terminate && out_info->dst_fptr && out_info->size_limit)
-		out_info->dst_fptr(out_info->dst_fptr_vars, 0);
-}
-
-static void out_buf(void* out_buf_vars, char x)
-{
-	char** dst = (char**)out_buf_vars;
-	**dst = x;
-	(*dst)++;
+	if(out_info->buf && out_info->size_limit)
+		*(out_info->buf) = 0;
 }
 
 #endif //FIRST_PASS
