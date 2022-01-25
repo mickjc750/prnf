@@ -229,6 +229,44 @@ This is useful in situations where you may need to iterate through a number of f
 <br>
 <br>
 
+# Extending prnf
+
+__THE FOLLOWING FEATURE IS DISABLED BY DEFAULT DUE TO HEAP INTERACTION__
+
+ Most applications need to print things beyond what is offered by the standard placeholder types. This feature provides an easy way of doing that, but it requires the heap (or some other dynamic memory allocator) to work.
+
+ When enabled, prnf() will accept a %n as a C string (like %s), only it will free() the address after printing. The argument type is int*, even though it points to a string. This allows the user to create functions which produce whatever strings they need (coordinates, timestamps, etc..), and then use these functions as arguments to prnf(). Exmaple:
+
+	static int* prnfext_bananas(int bananas)
+	{
+		int txt_size = 25;
+		char* txt = malloc(txt_size);
+		if(bananas > 10)
+			snprnf(txt, txt_size, "LOTS OF BANANAS!");
+		else if(bananas > 1)
+			snprnf(txt, txt_size, "A few bananas");
+		else if (bananas)
+			snprnf(txt, txt_size, "Only one banana");
+		else 
+			snprnf(txt, txt_size, "NO BANANAS! :-(");
+		return (int*)txt;
+	}
+
+	prnf("Gorilla Fred has %n and Uncle Bob has %n\n", prnfext_bananas(freds_bananas), prnfext_bananas(bobs_bananas));
+
+As these functions need to return an int* to a string on the heap, their name should probably indicate that their sole purpose is
+ to provide arguments to prnf() for %n placeholders.
+Note that if you mistakenly mix up %s and %n, you will get a compilation warning, as %s expects a char* and %n expects an int*
+
+__Should this be done?__
+
+ It is commonplace for the creator of an object to allocate memory for it, such as getline() and aprintf().
+ Therefore, it is symmetrically no worse, for the consumer of an object to free that memory.
+ Dynamic memory allocation in C is playing with fire. But used with caution, fire can be very useful.
+
+<br>
+<br>
+
 # Issues
 
 Please raise an issue if you find a bug (unlikely), or even if you find any of the above instuctions confusing.
