@@ -192,7 +192,8 @@
 	
 	static uint_least8_t ulong2asc_rev(char* buf, unsigned long i);
 
-	static void out(struct out_struct *out_info, char x);
+	static void out_char(struct out_struct *out_info, char x);
+	static void out_terminate(struct out_struct *out_info);
 	static void out_buf(void* out_buf_vars, char x);
 
 	static void print_str(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm);
@@ -340,7 +341,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 			fmtstr++;
 			if(FMTRD(fmtstr) == '%')
 			{
-				out(out_info, '%');
+				out_char(out_info, '%');
 				fmtstr++;
 			}
 			else
@@ -386,7 +387,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 				}
 #endif
 				else if(placeholder.type == TYPE_CHAR)
-					out(out_info, (char)va_arg(va, int));
+					out_char(out_info, (char)va_arg(va, int));
 
 				else if(placeholder.type == TYPE_STR)
 					print_str(out_info, &placeholder, va_arg(va, char*), false);
@@ -406,13 +407,13 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 		}
 		else
 		{
-			out(out_info, FMTRD(fmtstr));
+			out_char(out_info, FMTRD(fmtstr));
 			fmtstr++;
 		};
 	};
 
 	// Terminate
-	out(out_info, 0);
+	out_terminate(out_info);
 
 	return out_info->char_cnt;
 }
@@ -601,13 +602,13 @@ static void print_dec(struct out_struct *out_info, struct placeholder_struct* pl
 	prepad(out_info, placeholder, number_len);
 
 	if(sign_char)
-		out(out_info, sign_char);
+		out_char(out_info, sign_char);
 	while(zero_pad_len--)
-		out(out_info, '0');
+		out_char(out_info, '0');
 	do
 	{
 		txt_ptr--;
-		out(out_info, *txt_ptr);
+		out_char(out_info, *txt_ptr);
 	}while(txt_ptr != txt);
 
 	//postpad number length to satisfy width  (if specified)
@@ -631,7 +632,7 @@ static void print_bin(struct out_struct *out_info, struct placeholder_struct* pl
 	bit = 1UL<<(number_len-1);
 	while(bit)
 	{
-		out(out_info, (uvalue & bit)? '1':'0');
+		out_char(out_info, (uvalue & bit)? '1':'0');
 		bit >>= 1;
 	};
 
@@ -658,7 +659,7 @@ static void print_hex(struct out_struct *out_info, struct placeholder_struct* pl
 	do
 	{
 		offset -= 4;
-		out(out_info, ascii_hex_digit((uint_least8_t)(uvalue >> offset)));
+		out_char(out_info, ascii_hex_digit((uint_least8_t)(uvalue >> offset)));
 	}while(offset);
 
 	//postpad number length to satisfy width  (if specified)
@@ -755,18 +756,18 @@ static void print_float_normal(struct out_struct *out_info, struct placeholder_s
 	prepad(out_info, placeholder, number_len);
 
 	if(sign_char)
-		out(out_info, sign_char);
+		out_char(out_info, sign_char);
 	
 	do
 	{
 		if(radix_pos-- == 0)
-			out(out_info, '.');
+			out_char(out_info, '.');
 		txt_ptr--;
-		out(out_info, *txt_ptr);
+		out_char(out_info, *txt_ptr);
 	}while(txt_ptr != txt);
 
 	if(postpend)
-		out(out_info, postpend);
+		out_char(out_info, postpend);
 
 	//postpad number length to satisfy width  (if specified)
 	postpad(out_info, placeholder, number_len);
@@ -791,9 +792,9 @@ static void print_float_special(struct out_struct *out_info, struct placeholder_
 	//prepad length to satisfy width (if specified)
 	prepad(out_info, &ph, msg_len);
 	if(sign_char)
-		out(out_info, sign_char);
+		out_char(out_info, sign_char);
 	while(*out_msg)
-		out(out_info, *out_msg++);
+		out_char(out_info, *out_msg++);
 	postpad(out_info, &ph, msg_len);
 }
 
@@ -833,7 +834,7 @@ static void print_str(struct out_struct *out_info, struct placeholder_struct* pl
 	cnt = source_len;
 	while(cnt--)
 	{
-		out(out_info, FMTRD(str));
+		out_char(out_info, FMTRD(str));
 		str++;
 	};
 
@@ -875,7 +876,7 @@ static void prepad(struct out_struct *out_info, struct placeholder_struct* place
 			pad_char = '0';
 
 	while(pad_len--)
-		out(out_info, pad_char);
+		out_char(out_info, pad_char);
 }
 
 // postpad the output to achieve width, if needed
@@ -896,7 +897,7 @@ static void postpad(struct out_struct *out_info, struct placeholder_struct* plac
 		pad_len = placeholder->width - source_len;
 	
 	while(pad_len--)
-		out(out_info, ' ');
+		out_char(out_info, ' ');
 }
 
 //string type with .precision of 0?
@@ -1017,16 +1018,17 @@ static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
 // Counts output characters (regardless of truncation)
 // Calls function pointer to destinations character output.
 // Truncates output
-// Terminates output, (depending on out_info->terminate)
-static void out(struct out_struct *out_info, char x)
+static void out_char(struct out_struct *out_info, char x)
 {
-	if(x)
-	{
-		if(out_info->char_cnt+1 < out_info->size_limit && out_info->dst_fptr)
-			out_info->dst_fptr(out_info->dst_fptr_vars, x);
-		out_info->char_cnt++;
-	}
-	else if(out_info->terminate && out_info->dst_fptr && out_info->size_limit)
+	if(out_info->char_cnt+1 < out_info->size_limit && out_info->dst_fptr)
+		out_info->dst_fptr(out_info->dst_fptr_vars, x);
+	out_info->char_cnt++;
+}
+
+// possibly terminates output, (depending on out_info->terminate)
+static void out_terminate(struct out_struct *out_info)
+{
+	if(out_info->terminate && out_info->dst_fptr && out_info->size_limit)
 		out_info->dst_fptr(out_info->dst_fptr_vars, 0);
 }
 
