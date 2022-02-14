@@ -34,11 +34,11 @@
 //********************************************************************************************************
 
 
-	#if ULONG_MAX == 4294967295
+	#if ULONG_MAX == 4294967295U
 		#define DEC_BUF_SIZE 	10
 		#define FLOAT_PREC_MAX	9
 		#define LONG_IS_32
-	#elif ULONG_MAX == 18446744073709551615
+	#elif ULONG_MAX == 18446744073709551615U
 		#define DEC_BUF_SIZE 	20
 		#define FLOAT_PREC_MAX	19
 	#else
