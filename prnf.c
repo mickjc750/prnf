@@ -6,14 +6,8 @@
 	#define IS_SECOND_PASS false
 
 	#include <stdbool.h>
-	#include <stddef.h>
-	#include <stdarg.h>
 	#include <stdint.h>
 	#include <limits.h>
-
-	#ifdef PLATFORM_AVR
-		#include <avr/pgmspace.h>
-	#endif
 
 	#include "prnf.h"
 
