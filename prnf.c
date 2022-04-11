@@ -90,6 +90,18 @@
 		char prefix;
 	};
 
+	//A union capable of holding any type of argument passed in the variable argument list
+	union varg_union
+	{
+		long l;
+		unsigned long ul;
+		int i;
+		unsigned int ui;
+		float f;
+		const char* str;
+		char c;
+	};
+
 	#ifdef SUPPORT_EXTENSIONS
 	#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders."
 	#endif
@@ -310,17 +322,11 @@ static char fmt_rd_either(const char* fmt, bool is_pgm)
 static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va)
 {
 	struct placeholder_struct placeholder;
+	union varg_union value;
+
 	#ifdef SUPPORT_EXTENSIONS
 	char* charptr;
 	#endif
-
-	union
-	{
-		long l;
-		unsigned long ul;
-		int i;
-		unsigned int ui;
-	} value = {.ul = 0ul};
 
 	#ifdef SUPPORT_FLOAT
 		struct eng_struct eng;
@@ -341,10 +347,6 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 			{
 				fmtstr = parse_placeholder(&placeholder, fmtstr, is_pgm);
 
-				// This was initially in a print_placeholder() function, but passing va_list to a function did not work on gcc-avr
-				// each call accessed the first argument. Attempting to pass it by reference did not work on PC, as on the PC va_list is
-				// an array type which was broken by pointer decay (although this did work on AVR).
-
 				//integer type? (int uint bin hex size_t ptrdiff_t)
 				if(is_type_int(placeholder.type))
 				{
@@ -353,12 +355,24 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 					else
 					{
 						value.ui = va_arg(va, unsigned int);	
+						//sign extend int to long (or uint to ulong)
 						if(is_type_unsigned(placeholder.type))
 							value.ul = value.ui;
 						else
 							value.l = value.i;
 					};
-				};
+				}
+				else if(placeholder.type == TYPE_FLOAT || placeholder.type == TYPE_ENG)
+					value.f = (float)va_arg(va, double);
+
+				else if(placeholder.type == TYPE_CHAR)
+					value.c = (char)va_arg(va, int);
+
+				else if(placeholder.type == TYPE_STR || placeholder.type == TYPE_PSTR)
+					value.str = va_arg(va, char*);
+
+				else if(placeholder.type == TYPE_NSTR)
+					value.str = va_arg(va, int*);
 
 				if(placeholder.type == TYPE_INT || placeholder.type == TYPE_UINT)
 					print_dec(out_info, &placeholder, value.l);
@@ -371,29 +385,29 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 
 #ifdef SUPPORT_FLOAT
 				else if(placeholder.type == TYPE_FLOAT)
-					print_float(out_info, &placeholder, (float)va_arg(va, double), 0);
+					print_float(out_info, &placeholder, value.f, 0);
 
 				else if(placeholder.type == TYPE_ENG)
 				{	
-					eng = get_eng((float)va_arg(va, double));
+					eng = get_eng(value.f);
 					print_float(out_info, &placeholder, eng.value, eng.prefix);
 				}
 #endif
 				else if(placeholder.type == TYPE_CHAR)
-					out_char(out_info, (char)va_arg(va, int));
+					out_char(out_info, value.c);
 
 				else if(placeholder.type == TYPE_STR)
-					print_str(out_info, &placeholder, va_arg(va, char*), false);
+					print_str(out_info, &placeholder, value.str, false);
 
 				#ifdef PLATFORM_AVR
 				else if(placeholder.type == TYPE_PSTR)
-					print_str(out_info, &placeholder, va_arg(va, char*), true);
+					print_str(out_info, &placeholder, value.str, true);
 				#endif
 				#ifdef SUPPORT_EXTENSIONS
 				else if(placeholder.type == TYPE_NSTR)
 				{
-					print_str(out_info, &placeholder, (charptr=(char*)va_arg(va, int*)), false);
-					prnf_free(charptr);
+					print_str(out_info, &placeholder, value.str, false);
+					prnf_free(value.str);
 				};
 				#endif
 			};
