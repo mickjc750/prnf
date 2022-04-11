@@ -929,7 +929,11 @@ static void postpad(struct out_struct *out_info, struct placeholder_struct* plac
 //string type with .precision of 0?
 static bool is_centered_string(struct placeholder_struct* placeholder)
 {
-	return ((placeholder->type == TYPE_STR || placeholder->type == TYPE_PSTR) && placeholder->width && placeholder->prec_specified && placeholder->prec==0);
+	return ((placeholder->type == TYPE_STR || placeholder->type == TYPE_PSTR)
+	 && !placeholder->prec_is_dynamic
+	 && placeholder->width
+	 && placeholder->prec_specified
+	 && placeholder->prec==0);
 }
 
 //return true for only unsigned integer types
