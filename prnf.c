@@ -39,6 +39,11 @@
 		#error Long is not 32bit or 64bit
 	#endif
 
+	#define NO_PREFIX	0
+
+	#define IS_PGM		true
+	#define IS_NOT_PGM	false
+
 	#ifndef SIZE_MAX
 		#define SIZE_MAX ((size_t)(ssize_t)(-1))
 	#endif
@@ -554,7 +559,7 @@ static void print_placeholder(struct out_struct *out_info, union varg_union varg
 
 #ifdef SUPPORT_FLOAT
 	else if(placeholder->type == TYPE_FLOAT)
-		print_float(out_info, placeholder, varg.f, 0);
+		print_float(out_info, placeholder, varg.f, NO_PREFIX);
 
 	else if(placeholder->type == TYPE_ENG)
 	{	
@@ -566,16 +571,16 @@ static void print_placeholder(struct out_struct *out_info, union varg_union varg
 		out_char(out_info, varg.c);
 
 	else if(placeholder->type == TYPE_STR)
-		print_str(out_info, placeholder, varg.str, false);
+		print_str(out_info, placeholder, varg.str, IS_NOT_PGM);
 
 	#ifdef PLATFORM_AVR
 	else if(placeholder->type == TYPE_PSTR)
-		print_str(out_info, placeholder, varg.str, true);
+		print_str(out_info, placeholder, varg.str, IS_PGM);
 	#endif
 	#ifdef SUPPORT_EXTENSIONS
 	else if(placeholder->type == TYPE_NSTR)
 	{
-		print_str(out_info, placeholder, varg.str, false);
+		print_str(out_info, placeholder, varg.str, IS_NOT_PGM);
 		prnf_free(value.str);
 	};
 	#endif
