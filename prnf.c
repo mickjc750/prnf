@@ -169,6 +169,7 @@
 
 #ifdef FIRST_PASS
 	static const char* parse_placeholder(struct placeholder_struct* placeholder, const char* fmtstr, bool is_pgm);
+	static void print_placeholder(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder);
 	static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va);
 
 	static void print_bin(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
@@ -355,14 +356,6 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 	struct placeholder_struct placeholder;
 	union varg_union varg;
 
-	#ifdef SUPPORT_EXTENSIONS
-	char* charptr;
-	#endif
-
-	#ifdef SUPPORT_FLOAT
-		struct eng_struct eng;
-	#endif
-
 	while(FMTRD(fmtstr))
 	{
 		// placeholder? %[flags][width][.precision][length]type
@@ -377,45 +370,8 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 			else
 			{
 				fmtstr = parse_placeholder(&placeholder, fmtstr, is_pgm);
-
 				READ_VARG(varg, va, placeholder);
-
-				if(placeholder.type == TYPE_INT || placeholder.type == TYPE_UINT)
-					print_dec(out_info, &placeholder, varg.l);
-				
-				else if(placeholder.type == TYPE_BIN)
-					print_bin(out_info, &placeholder, varg.ul);
-							
-				else if(placeholder.type == TYPE_HEX)
-					print_hex(out_info, &placeholder, varg.ul);
-
-#ifdef SUPPORT_FLOAT
-				else if(placeholder.type == TYPE_FLOAT)
-					print_float(out_info, &placeholder, varg.f, 0);
-
-				else if(placeholder.type == TYPE_ENG)
-				{	
-					eng = get_eng(varg.f);
-					print_float(out_info, &placeholder, eng.value, eng.prefix);
-				}
-#endif
-				else if(placeholder.type == TYPE_CHAR)
-					out_char(out_info, varg.c);
-
-				else if(placeholder.type == TYPE_STR)
-					print_str(out_info, &placeholder, varg.str, false);
-
-				#ifdef PLATFORM_AVR
-				else if(placeholder.type == TYPE_PSTR)
-					print_str(out_info, &placeholder, varg.str, true);
-				#endif
-				#ifdef SUPPORT_EXTENSIONS
-				else if(placeholder.type == TYPE_NSTR)
-				{
-					print_str(out_info, &placeholder, varg.str, false);
-					prnf_free(value.str);
-				};
-				#endif
+				print_placeholder(out_info, varg, &placeholder);
 			};
 		}
 		else
@@ -571,6 +527,50 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 
 	*dst = placeholder;
 	return fmtstr;
+}
+
+static void print_placeholder(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder)
+{
+	#ifdef SUPPORT_FLOAT
+		struct eng_struct eng;
+	#endif
+
+	if(placeholder->type == TYPE_INT || placeholder->type == TYPE_UINT)
+		print_dec(out_info, placeholder, varg.l);
+	
+	else if(placeholder->type == TYPE_BIN)
+		print_bin(out_info, placeholder, varg.ul);
+				
+	else if(placeholder->type == TYPE_HEX)
+		print_hex(out_info, placeholder, varg.ul);
+
+#ifdef SUPPORT_FLOAT
+	else if(placeholder->type == TYPE_FLOAT)
+		print_float(out_info, placeholder, varg.f, 0);
+
+	else if(placeholder->type == TYPE_ENG)
+	{	
+		eng = get_eng(varg.f);
+		print_float(out_info, placeholder, eng.value, eng.prefix);
+	}
+#endif
+	else if(placeholder->type == TYPE_CHAR)
+		out_char(out_info, varg.c);
+
+	else if(placeholder->type == TYPE_STR)
+		print_str(out_info, placeholder, varg.str, false);
+
+	#ifdef PLATFORM_AVR
+	else if(placeholder->type == TYPE_PSTR)
+		print_str(out_info, placeholder, varg.str, true);
+	#endif
+	#ifdef SUPPORT_EXTENSIONS
+	else if(placeholder->type == TYPE_NSTR)
+	{
+		print_str(out_info, placeholder, varg.str, false);
+		prnf_free(value.str);
+	};
+	#endif
 }
 
 //Handles both signed and unsigned decimal integers
