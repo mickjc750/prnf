@@ -23,6 +23,18 @@
 //	#include <stdlib.h>
 //	#define prnf_free(arg) 	free(arg)
 
+//	Configure runtime warning handler (if you have one)
+	#ifndef WARN
+		#define WARN(arg) ((void)(0))
+	#endif
+
+//	Configure assert handler
+	#ifndef ASSERT
+		#define ASSERT(arg) ((void)(0))
+//		#include <assert.h>
+//		#define ASSERT(arg) assert(arg)
+	#endif
+
 //********************************************************************************************************
 // Local defines
 //********************************************************************************************************
@@ -50,14 +62,6 @@
 
 	#ifdef SUPPORT_FLOAT
 		#include <float.h>
-	#endif
-
-	#ifndef WARN
-		#define WARN(arg) ((void)(0))
-	#endif
-
-	#ifndef ASSERT
-		#define ASSERT(arg) ((void)(0))
 	#endif
 
 	#ifdef PLATFORM_AVR
@@ -104,7 +108,7 @@
 		int i;
 		unsigned int ui;
 		float f;
-		const char* str;
+		char* str;
 		char c;
 	};
 
@@ -327,9 +331,12 @@ static char fmt_rd_either(const char* fmt, bool is_pgm)
 #endif
 
 //Read from variable argument list (src) to varg union (dst)
-#define READ_VARG(dst, src, placeholder) 											\
+#define READ_VARG(dst, placeholder, src) 											\
 do																					\
 {																					\
+	if(placeholder.prec_is_dynamic)													\
+		placeholder.prec = va_arg(va, int);											\
+																					\
 	if(is_type_int(placeholder.type))												\
 	{																				\
 		if(placeholder.size_modifier == sizeof(long))								\
@@ -353,7 +360,7 @@ do																					\
 		dst.str = va_arg(src, char*);												\
 																					\
 	else if(placeholder.type == TYPE_NSTR)											\
-		dst.str = va_arg(src, int*);												\
+		dst.str = (char*)va_arg(src, int*);											\
 																					\
 }while(false)
 
@@ -376,9 +383,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 			else
 			{
 				fmtstr = parse_placeholder(&placeholder, fmtstr, is_pgm);
-				READ_VARG(varg, va, placeholder);
-				if(placeholder.prec_is_dynamic)
-					placeholder.prec = va_arg(va, int);
+				READ_VARG(varg, placeholder, va);
 				print_placeholder(out_info, varg, &placeholder);
 			};
 		}
@@ -581,7 +586,7 @@ static void print_placeholder(struct out_struct *out_info, union varg_union varg
 	else if(placeholder->type == TYPE_NSTR)
 	{
 		print_str(out_info, placeholder, varg.str, IS_NOT_PGM);
-		prnf_free(value.str);
+		prnf_free(varg.str);
 	};
 	#endif
 }
@@ -851,8 +856,7 @@ static void print_str(struct out_struct *out_info, struct placeholder_struct* pl
 
 	source_len = prnf_strlen(str, is_pgm);
 
-	//limit source length to precision, if precision is non0
-	if(placeholder->prec_specified && placeholder->prec && placeholder->prec < source_len)
+	if(placeholder->prec_specified && placeholder->prec < source_len && !is_centered_string(placeholder))
 		source_len = placeholder->prec;
 
 	prepad(out_info, placeholder, source_len);
