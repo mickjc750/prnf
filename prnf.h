@@ -130,6 +130,17 @@
 #ifndef _PRNF_H_
 #define _PRNF_H_
 
+//	For va_list
+	#include <stdarg.h>
+
+//	size_t
+	#include <stddef.h>
+
+//	AVR's PSTR
+	#ifdef PLATFORM_AVR
+	#include <avr/pgmspace.h>
+	#endif
+
 //********************************************************************************************************
 // Public defines
 //********************************************************************************************************
