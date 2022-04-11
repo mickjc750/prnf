@@ -319,6 +319,37 @@ static char fmt_rd_either(const char* fmt, bool is_pgm)
 }
 #endif
 
+//Read from variable argument list (src) to varg union (dst)
+#define READ_VARG(dst, src, placeholder) 											\
+do																					\
+{																					\
+	if(is_type_int(placeholder.type))												\
+	{																				\
+		if(placeholder.size_modifier == sizeof(long))								\
+			dst.ul = va_arg(src, unsigned long);									\
+		else																		\
+		{																			\
+			dst.ui = va_arg(src, unsigned int);										\
+			if(is_type_unsigned(placeholder.type))									\
+				dst.ul = dst.ui;													\
+			else																	\
+				dst.l = dst.i;														\
+		};																			\
+	}																				\
+	else if(placeholder.type == TYPE_FLOAT || placeholder.type == TYPE_ENG)			\
+		dst.f = (float)va_arg(src, double);											\
+																					\
+	else if(placeholder.type == TYPE_CHAR)											\
+		dst.c = (char)va_arg(src, int);												\
+																					\
+	else if(placeholder.type == TYPE_STR || placeholder.type == TYPE_PSTR)			\
+		dst.str = va_arg(src, char*);												\
+																					\
+	else if(placeholder.type == TYPE_NSTR)											\
+		dst.str = va_arg(src, int*);												\
+																					\
+}while(false)
+
 static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va)
 {
 	struct placeholder_struct placeholder;
@@ -347,32 +378,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 			{
 				fmtstr = parse_placeholder(&placeholder, fmtstr, is_pgm);
 
-				//integer type? (int uint bin hex size_t ptrdiff_t)
-				if(is_type_int(placeholder.type))
-				{
-					if(placeholder.size_modifier == sizeof(long))
-						varg.ul = va_arg(va, unsigned long);	
-					else
-					{
-						varg.ui = va_arg(va, unsigned int);	
-						//sign extend int to long (or uint to ulong)
-						if(is_type_unsigned(placeholder.type))
-							varg.ul = varg.ui;
-						else
-							varg.l = varg.i;
-					};
-				}
-				else if(placeholder.type == TYPE_FLOAT || placeholder.type == TYPE_ENG)
-					varg.f = (float)va_arg(va, double);
-
-				else if(placeholder.type == TYPE_CHAR)
-					varg.c = (char)va_arg(va, int);
-
-				else if(placeholder.type == TYPE_STR || placeholder.type == TYPE_PSTR)
-					varg.str = va_arg(va, char*);
-
-				else if(placeholder.type == TYPE_NSTR)
-					varg.str = va_arg(va, int*);
+				READ_VARG(varg, va, placeholder);
 
 				if(placeholder.type == TYPE_INT || placeholder.type == TYPE_UINT)
 					print_dec(out_info, &placeholder, varg.l);
