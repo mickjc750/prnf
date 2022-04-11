@@ -71,6 +71,7 @@
 		bool 	prec_specified;
 		int 	width;
 		int 	prec;
+		bool	prec_is_dynamic;
 		uint_least8_t size_modifier;	//equal to size of int, or size of specified type (l h hh etc)
 		uint_least8_t type;				//TYPE_x
 	};
@@ -371,6 +372,8 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 			{
 				fmtstr = parse_placeholder(&placeholder, fmtstr, is_pgm);
 				READ_VARG(varg, va, placeholder);
+				if(placeholder.prec_is_dynamic)
+					placeholder.prec = va_arg(va, int);
 				print_placeholder(out_info, varg, &placeholder);
 			};
 		}
@@ -390,7 +393,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 // parse textual placeholder information into a placeholder_struct
 static const char* parse_placeholder(struct placeholder_struct* dst, const char* fmtstr, bool is_pgm)
 {
-	struct placeholder_struct placeholder = {false, false, 0, false, 0, 0, sizeof(int), TYPE_NONE};
+	struct placeholder_struct placeholder = {false, false, 0, false, 0, 0, false, sizeof(int), TYPE_NONE};
 	bool finished;
 
 	//Get flags
@@ -424,7 +427,12 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 	{
 		placeholder.prec_specified = true;
 		fmtstr++;
-		while(prnf_is_digit(FMTRD(fmtstr)))
+		if(FMTRD(fmtstr) == '*')
+		{
+			placeholder.prec_is_dynamic = true;
+			fmtstr++;
+		}
+		else while(prnf_is_digit(FMTRD(fmtstr)))
 		{
 			placeholder.prec *=10;
 			placeholder.prec += FMTRD(fmtstr)&0x0F;
