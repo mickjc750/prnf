@@ -1,8 +1,8 @@
  # PRNF
  A lightweight printf implementation.
- With some reasonable limitations, and non-standard behaviour suited to microcontrollers.
+ With some reasonable limitations, and non-standard behavior suited to microcontrollers.
 
-  If you need a full featured printf(), I strongly reccomend checking out eyalroz's fork
+  If you need a full featured printf(), I strongly recommend checking out eyalroz's fork
  of mpaland's printf(), which can be found [here](https://github.com/eyalroz/printf).
   After some involvement in that project, I realized it would never quite be exactly what I wanted.
  So I wrote this. Some of the ideas used in this are from the authors of that project.
@@ -99,7 +99,7 @@
 				Values outside this range will produce "OVER".
 				A value of 0.0 is always positive. 
 
-	e			NOT exponential. Floating point with engineering notaion (y z a f p n u m - k M G T P E Z Y).
+	e			NOT exponential. Floating point with engineering notation (y z a f p n u m - k M G T P E Z Y).
 				Number is postpended with the SI prefix. Default precision is 0.
  
 
@@ -238,7 +238,7 @@ __THE FOLLOWING FEATURE IS DISABLED BY DEFAULT DUE TO HEAP INTERACTION__
 
  Most applications need to print things beyond what is offered by the standard placeholder types. This feature provides an easy way of doing that, but it requires the heap (or some other dynamic memory allocator) to work.
 
- When enabled, prnf() will accept a %n as a C string (like %s), only it will free() the address after printing. The argument type is int*, even though it points to a string. This allows the user to create functions which produce whatever strings they need (coordinates, timestamps, etc..), and then use these functions as arguments to prnf(). Exmaple:
+ When enabled, prnf() will accept a %n as a C string (like %s), only it will free() the address after printing. The argument type is int*, even though it points to a string. This allows the user to create functions which produce whatever strings they need (coordinates, timestamps, etc..), and then use these functions as arguments to prnf(). Example:
 
 	static int* prnfext_bananas(int bananas)
 	{
@@ -261,16 +261,10 @@ As these functions need to return an int* to a string on the heap, their name sh
  to provide arguments to prnf() for %n placeholders.
 Note that if you mistakenly mix up %s and %n, you will get a compilation warning, as %s expects a char* and %n expects an int*
 
-__Should this be done?__
-
- It is commonplace for the creator of an object to allocate memory for it, such as getline() and aprintf().
- Therefore, it is symmetrically no worse, for the consumer of an object to free that memory.
- Dynamic memory allocation in C is playing with fire. But used with caution, fire can be very useful.
-
 <br>
 <br>
 
 # Issues
 
-Please raise an issue if you find a bug (unlikely), or even if you find any of the above instuctions confusing.
+Please raise an issue if you find a bug (unlikely), or even if you find any of the above instructions confusing.
 I'm willing to help.
