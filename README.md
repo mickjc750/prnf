@@ -60,9 +60,12 @@
 	For binary and hex, this specifies the *exact* number of digits to print, default is based on the argument size.
 	For strings %s %S, This is the maximum number of characters to read from the source.
 
-	Centering strings: If [width] is specified and precision is .0 %s arguments will centered.
+	If precision is specified as .* A dynamic precision must be provided as int argument preceding the argument to be formatted.
+
+	Centering strings: If [width] is specified and precision is .0 %s arguments will be centered.
+	Example to center within a 16 character LCD would be "%16.0s"
 	**Caution - If you are generating formatting strings at runtime, and generate a %[width].0s, you will NOT get 0 characters.
-	Dynamic precision using %.* is NOT supported.
+	A dynamic precision of 0 provided to .* will not centre the string.
 
  Supported [length]:
  
