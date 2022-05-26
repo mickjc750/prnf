@@ -88,6 +88,7 @@
 	struct out_struct
 	{
 		int		char_cnt;
+		int 	col;
 		size_t	size_limit;
 		char* 	buf;
 		void* 	dst_fptr_vars;
@@ -180,6 +181,7 @@
 #ifdef FIRST_PASS
 	static const char* parse_placeholder(struct placeholder_struct* placeholder, const char* fmtstr, bool is_pgm);
 	static void print_placeholder(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder);
+	static void print_col_alignment(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder);
 	static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va);
 
 	static void print_bin(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
@@ -386,6 +388,12 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 				READ_VARG(varg, placeholder, va);
 				print_placeholder(out_info, varg, &placeholder);
 			};
+		}
+		// colum alignment?
+		else if(FMTRD(fmtstr) == '\v')
+		{
+			fmtstr++;
+			fmtstr = print_col_alignment(out_info, fmtstr);
 		}
 		else
 		{
@@ -871,6 +879,36 @@ static void print_str(struct out_struct *out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, source_len);
 }
 
+// print colum alignment  \v<col><pad char>
+// if \v is encountered without <col> output \v
+// if \v is encountered with <col>, but <pad char> is the string terminator, output nothing
+static const char* print_col_alignment(struct out_struct *out_info, struct out_info const char* fmtstr)
+{
+	int col = 0;
+	char pad_char;
+	bool got_col = false;
+
+	while(prnf_is_digit(FMTRD(fmtstr)))
+	{
+		col *=10;
+		col += FMTRD(fmtstr)&0x0F;
+		fmtstr++;
+		got_col = true;
+	};
+	pad_char = FMTRD(fmtstr);
+
+	if(!got_col)
+		out_char(out_info, '\v');
+	else if(pad_char)
+	{
+		while(out_info->col < col)
+			out_char(out_info, pad_char);
+		fmtstr++;
+	};
+
+	return fmtstr;
+}
+
 static int prnf_strlen(const char* str, bool is_pgm)
 {
 	int retval = 0;
@@ -1052,15 +1090,35 @@ static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
 // Counts output characters (regardless of truncation)
 // Calls function pointer to destinations character output OR writes to buffer
 // Truncates buffer output
+// Detects line endings (of any type) and tracks colum
 static void out_char(struct out_struct *out_info, char x)
 {
+	bool tmp;
+	static bool ignore_lf;
+	static bool ignore_cr;
+
 	if(out_info->buf && out_info->char_cnt+1 < out_info->size_limit)
 		*(out_info->buf++) = x;
 
 	else if(out_info->dst_fptr)
 		out_info->dst_fptr(out_info->dst_fptr_vars, x);
 
-	out_info->char_cnt++;
+	if(out_info->char_cnt == 0)
+	{
+		ignore_cr = false;
+		ignore_lf = false;
+	};
+
+	if(x=='\r' || x=='\n')
+	{
+		tmp 	  = (x=='\r' && !ignore_cr);
+		ignore_cr = (x=='\n' && !ignore_lf);
+		ignore_lf = tmp;
+		if(ignore_lf || ignore_cr)
+			out_info->col = 0;
+	}
+	else
+		out_info->char_cnt++;
 }
 
 // possibly terminates output
