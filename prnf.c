@@ -780,7 +780,7 @@ static void print_float_normal(struct out_struct *out_info, struct placeholder_s
 	if(sign_char)		//+1 for sign character
 		number_len++;
 
-	if(postpend)		//+1 for engineering notaion?
+	if(postpend && uvalue)		//+1 for engineering notaion?
 		number_len++;
 
 	//prepad number length to satisfy width  (if specified)
@@ -797,7 +797,7 @@ static void print_float_normal(struct out_struct *out_info, struct placeholder_s
 		out_char(out_info, *txt_ptr);
 	}while(txt_ptr != txt);
 
-	if(postpend)
+	if(postpend && uvalue)
 		out_char(out_info, postpend);
 
 	//postpad number length to satisfy width  (if specified)
