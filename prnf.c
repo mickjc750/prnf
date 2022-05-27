@@ -1090,12 +1090,10 @@ static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
 // Counts output characters (regardless of truncation)
 // Calls function pointer to destinations character output OR writes to buffer
 // Truncates buffer output
-// Detects line endings (of any type) and tracks colum
+// Detects line endings and tracks colum (1st column is 0)
 static void out_char(struct out_struct *out_info, char x)
 {
 	bool tmp;
-	static bool ignore_lf;
-	static bool ignore_cr;
 
 	if(out_info->buf && out_info->char_cnt+1 < out_info->size_limit)
 		*(out_info->buf++) = x;
@@ -1103,22 +1101,12 @@ static void out_char(struct out_struct *out_info, char x)
 	else if(out_info->dst_fptr)
 		out_info->dst_fptr(out_info->dst_fptr_vars, x);
 
-	if(out_info->char_cnt == 0)
-	{
-		ignore_cr = false;
-		ignore_lf = false;
-	};
-
 	if(x=='\r' || x=='\n')
-	{
-		tmp 	  = (x=='\r' && !ignore_cr);
-		ignore_cr = (x=='\n' && !ignore_lf);
-		ignore_lf = tmp;
-		if(ignore_lf || ignore_cr)
 			out_info->col = 0;
-	}
-	else
-		out_info->char_cnt++;
+	else if(x > 0x1F)
+		out_info->col++;
+
+	out_info->char_cnt++;
 }
 
 // possibly terminates output
