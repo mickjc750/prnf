@@ -87,8 +87,10 @@
 
 	struct out_struct
 	{
-		int		char_cnt;
+		#ifdef COL_ALIGNMENT
 		int 	col;
+		#endif
+		int		char_cnt;
 		size_t	size_limit;
 		char* 	buf;
 		void* 	dst_fptr_vars;
@@ -181,8 +183,11 @@
 #ifdef FIRST_PASS
 	static const char* parse_placeholder(struct placeholder_struct* placeholder, const char* fmtstr, bool is_pgm);
 	static void print_placeholder(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder);
-	static const char* print_col_alignment(struct out_struct *out_info, const char* fmtstr, bool is_pgm);
 	static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va);
+
+#ifdef COL_ALIGNMENT
+	static const char* print_col_alignment(struct out_struct *out_info, const char* fmtstr, bool is_pgm);
+#endif
 
 	static void print_bin(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
 	static void print_hex(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
@@ -389,12 +394,14 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 				print_placeholder(out_info, varg, &placeholder);
 			};
 		}
+		#ifdef COL_ALIGNMENT
 		// colum alignment?
 		else if(FMTRD(fmtstr) == '\v')
 		{
 			fmtstr++;
 			fmtstr = print_col_alignment(out_info, fmtstr, is_pgm);
 		}
+		#endif
 		else
 		{
 			out_char(out_info, FMTRD(fmtstr));
@@ -879,6 +886,7 @@ static void print_str(struct out_struct *out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, source_len);
 }
 
+#ifdef COL_ALIGNMENT
 // print colum alignment  \v<col><pad char>
 // if \v is encountered without <col> output \v
 // if \v is encountered with <col>, but <pad char> is the string terminator, output nothing
@@ -908,6 +916,7 @@ static const char* print_col_alignment(struct out_struct *out_info, const char* 
 
 	return fmtstr;
 }
+#endif
 
 static int prnf_strlen(const char* str, bool is_pgm)
 {
@@ -1099,10 +1108,12 @@ static void out_char(struct out_struct *out_info, char x)
 	else if(out_info->dst_fptr)
 		out_info->dst_fptr(out_info->dst_fptr_vars, x);
 
-	if(x=='\r' || x=='\n')
-			out_info->col = 0;
-	else if(x > 0x1F)
-		out_info->col++;
+	#ifdef COL_ALIGNMENT
+		if(x=='\r' || x=='\n')
+				out_info->col = 0;
+		else if(x > 0x1F)
+			out_info->col++;
+	#endif
 
 	out_info->char_cnt++;
 }
