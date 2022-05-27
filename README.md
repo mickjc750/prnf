@@ -12,7 +12,7 @@
  * Low stack & ram usage, zero heap usage.
  * Full support for AVR's PROGMEM requirements, with almost no cost to non-AVR targets.
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
- * no double or 64bit arithmetic, (doubles get demoted to float internally).
+ * no double or long long arithmetic, (doubles get demoted to float internally).
  
  * NO exponential form, %e provides SI units (y z a f p n u m - k M G T P E Z Y).
  * NO Octal, %o outputs binary instead, (who wants octal?)
@@ -95,7 +95,7 @@
 	f,F			Floating point (not double). NAN & INF are always uppercase.
 				Default precision is 3 (not 6).
 				Digits printed must be able to be represented by an unsigned long,
-				ei. with a precision of 3, maximum range is +/- 4294967.296 
+				ie. with a precision of 3, maximum range is +/- 4294967.296 
 				Values outside this range will produce "OVER".
 				A value of 0.0 is always positive. 
 
@@ -108,7 +108,7 @@
 	g,G 		Adaptive floats not available
 	a,A			Double in hex notation not available
 	p			Pointer not available
-	n			not available
+	n			classic %n is not available, but %n may be repurposed for extensions if enabled (see below)
 
 <br>
 <br>
@@ -190,7 +190,7 @@ Example usage:
 The above will output something like "main.c:0113 - value is 51"
 
 Note that even if you use this on many lines, the __FILE__ string literal will only occur once in the string pool. So it won't eat up all your program memory space.
-
+The PRNF_ARG_SL() macro simply puts string literals into program memory on AVR targets or RAM on normal targets.
 <br>
 <br>
 
@@ -232,6 +232,42 @@ This is useful in situations where you may need to iterate through a number of f
 <br>
 <br>
 
+
+# Column alignment
+
+
+This feature is enabled by default, but can be disabled in the configuration section of prnf.c<br>
+
+It is possible to advance output to a specific column, with respect to the start of the output, or the last line ending. To achieve this prnf hijacks the \v (vertical tab) character.<br>
+The required format is:
+
+	\v<col><pad character>
+
+
+\v should be followed by a decimal number indicating the column on which the following text will start on (with 0 being the first column). The character used for padding is the first non-numeric digit after this number. Note that due to this, digits cannot be used as the padding character. This feature is useful if you have output which contains fields of uncontrolled length, and then wish to align further output. If the current column is already at or past the column specified, then no padding will be applied. If \v occurs in your string without being followed by digits, then a regular \v character will be output.<br>
+Example:
+
+	prnf("%s:%.4i(%s)\v30 %s\n", __FILE__, __LINE__, __func__, "This text starts on column 30");
+
+Will yield something like:
+
+	myfile.c:0041(main)         This text starts on column 30
+
+<br>
+It can also be used as an easy way to create banners, for example:
+
+	prnf("\v30*\n Main Menu\n\v30*\n");
+
+Will yield:
+
+	******************************
+	 Main Menu
+	******************************
+
+
+<br>
+<br>
+
 # Extending prnf
 
 __THE FOLLOWING FEATURE IS DISABLED BY DEFAULT DUE TO HEAP INTERACTION__
@@ -240,7 +276,7 @@ __THE FOLLOWING FEATURE IS DISABLED BY DEFAULT DUE TO HEAP INTERACTION__
 
  When enabled, prnf() will accept a %n as a C string (like %s), only it will free() the address after printing. The argument type is int*, even though it points to a string. This allows the user to create functions which produce whatever strings they need (coordinates, timestamps, etc..), and then use these functions as arguments to prnf(). Example:
 
-	static int* prnfext_bananas(int bananas)
+	static int* prext_bananas(int bananas)
 	{
 		int txt_size = 25;
 		char* txt = malloc(txt_size);
@@ -255,11 +291,11 @@ __THE FOLLOWING FEATURE IS DISABLED BY DEFAULT DUE TO HEAP INTERACTION__
 		return (int*)txt;
 	}
 
-	prnf("Gorilla Fred has %n and Uncle Bob has %n\n", prnfext_bananas(freds_bananas), prnfext_bananas(bobs_bananas));
+	prnf("Gorilla Fred has %n and Uncle Bob has %n\n", prext_bananas(freds_bananas), prext_bananas(bobs_bananas));
 
-As these functions need to return an int* to a string on the heap, their name should probably indicate that their sole purpose is
+As these functions need to return an int* to a string on the heap, their name should indicate that their sole purpose is
  to provide arguments to prnf() for %n placeholders.
-Note that if you mistakenly mix up %s and %n, you will get a compilation warning, as %s expects a char* and %n expects an int*
+Note that if you mistakenly mix up %s and %n, you will get a compilation warning (a good thing), as %s expects a char* and %n expects an int*
 
 <br>
 <br>
