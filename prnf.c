@@ -221,6 +221,7 @@
 
 	static void print_str(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm);
 	static int prnf_strlen(const char* str, bool is_pgm);
+	static int prnf_atoi(const char** fmtstr, bool is_pgm);
 
 	#ifdef PLATFORM_AVR
 		static char fmt_rd_either(const char* fmt, bool is_pgm);
@@ -440,12 +441,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 	}while(!finished);
 
 	//Get width
-	while(prnf_is_digit(FMTRD(fmtstr)))
-	{
-		placeholder.width *=10;
-		placeholder.width += FMTRD(fmtstr)&0x0F;
-		fmtstr++;
-	};
+	placeholder.width = prnf_atoi(&fmtstr, is_pgm);
 
 	//Get precision
 	if(FMTRD(fmtstr) == '.')
@@ -457,12 +453,8 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			placeholder.prec_is_dynamic = true;
 			fmtstr++;
 		}
-		else while(prnf_is_digit(FMTRD(fmtstr)))
-		{
-			placeholder.prec *=10;
-			placeholder.prec += FMTRD(fmtstr)&0x0F;
-			fmtstr++;
-		};
+		else
+			placeholder.prec = prnf_atoi(&fmtstr, is_pgm);
 	};
 
 	//Get size modifier
@@ -896,13 +888,8 @@ static const char* print_col_alignment(struct out_struct* out_info, const char* 
 	char pad_char;
 	bool got_col = false;
 
-	while(prnf_is_digit(FMTRD(fmtstr)))
-	{
-		col *=10;
-		col += FMTRD(fmtstr)&0x0F;
-		fmtstr++;
-		got_col = true;
-	};
+	got_col = prnf_is_digit(FMTRD(fmtstr));
+	col = prnf_atoi(&fmtstr, is_pgm);
 	pad_char = FMTRD(fmtstr);
 
 	if(!got_col)
@@ -931,6 +918,21 @@ static int prnf_strlen(const char* str, bool is_pgm)
 		};
 	};
 	return retval;
+}
+
+static int prnf_atoi(const char** fmtstr, bool is_pgm)
+{
+	int value = 0;
+
+	//Get width
+	while(prnf_is_digit(FMTRD(*fmtstr)))
+	{
+		value *=10;
+		value += FMTRD(*fmtstr)&0x0F;
+		(*fmtstr)++;
+	};
+
+	return value;
 }
 
 // prepad the output to achieve width, if needed
