@@ -78,8 +78,8 @@
 
  Unsupported [length]:
 
-	ll			(long long) not supported
-	j			intmax_t not supported
+	ll		(long long) not supported
+	j		intmax_t not supported
 
 
  Supported types:
