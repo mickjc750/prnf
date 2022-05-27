@@ -18,10 +18,10 @@
 	#define SUPPORT_FLOAT
 	#define ENG_PREC_DEFAULT 	0
 	#define FLOAT_PREC_DEFAULT 	3
-
-//	#define SUPPORT_EXTENSIONS
-//	#include <stdlib.h>
-//	#define prnf_free(arg) 	free(arg)
+	#define COL_ALIGNMENT
+	#define SUPPORT_EXTENSIONS
+	#include <stdlib.h>
+	#define prnf_free(arg) 	free(arg)
 
 //	Configure runtime warning handler (if you have one)
 	#ifndef WARN
@@ -30,9 +30,9 @@
 
 //	Configure assert handler
 	#ifndef ASSERT
-		#define ASSERT(arg) ((void)(0))
-//		#include <assert.h>
-//		#define ASSERT(arg) assert(arg)
+//		#define ASSERT(arg) ((void)(0))
+		#include <assert.h>
+		#define ASSERT(arg) assert(arg)
 	#endif
 
 //********************************************************************************************************
@@ -181,7 +181,7 @@
 #ifdef FIRST_PASS
 	static const char* parse_placeholder(struct placeholder_struct* placeholder, const char* fmtstr, bool is_pgm);
 	static void print_placeholder(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder);
-	static void print_col_alignment(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder);
+	static const char* print_col_alignment(struct out_struct *out_info, const char* fmtstr, bool is_pgm);
 	static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va);
 
 	static void print_bin(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
@@ -393,7 +393,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 		else if(FMTRD(fmtstr) == '\v')
 		{
 			fmtstr++;
-			fmtstr = print_col_alignment(out_info, fmtstr);
+			fmtstr = print_col_alignment(out_info, fmtstr, is_pgm);
 		}
 		else
 		{
@@ -882,7 +882,7 @@ static void print_str(struct out_struct *out_info, struct placeholder_struct* pl
 // print colum alignment  \v<col><pad char>
 // if \v is encountered without <col> output \v
 // if \v is encountered with <col>, but <pad char> is the string terminator, output nothing
-static const char* print_col_alignment(struct out_struct *out_info, struct out_info const char* fmtstr)
+static const char* print_col_alignment(struct out_struct *out_info, const char* fmtstr, bool is_pgm)
 {
 	int col = 0;
 	char pad_char;
@@ -1093,8 +1093,6 @@ static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
 // Detects line endings and tracks colum (1st column is 0)
 static void out_char(struct out_struct *out_info, char x)
 {
-	bool tmp;
-
 	if(out_info->buf && out_info->char_cnt+1 < out_info->size_limit)
 		*(out_info->buf++) = x;
 
