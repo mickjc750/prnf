@@ -18,22 +18,28 @@
 	#define SUPPORT_FLOAT
 	#define ENG_PREC_DEFAULT 	0
 	#define FLOAT_PREC_DEFAULT 	3
+
+//	Remove this if you wish to output normal vertical line feeds (\v) from your format string
 	#define COL_ALIGNMENT
-	#define SUPPORT_EXTENSIONS
-	#include <stdlib.h>
-	#define prnf_free(arg) 	free(arg)
 
-//	Configure runtime warning handler (if you have one)
-	#ifndef WARN
-		#define WARN(arg) ((void)(0))
-	#endif
+//	To enable extensions, uncomment this #define, and include your memory allocator,
+//	define prnf_free() to be your allocators free() function.
+//	#define SUPPORT_EXTENSIONS
+//	#include <stdlib.h>
+//	#define prnf_free(arg) 	free(arg)
 
-//	Configure assert handler
-	#ifndef ASSERT
-//		#define ASSERT(arg) ((void)(0))
-		#include <assert.h>
-		#define ASSERT(arg) assert(arg)
-	#endif
+//	If you have a runtime warning handler, include it here and define WARN to be your handler.
+//  A 'true' argument is expected to generate a warning.
+//	Otherwise define WARN() as ((void)0) (which does nothing).
+//	#include "warn.h"
+	#define WARN(arg) ((void)(0))
+
+//	If you have an assertion handler, include it here and define ASSERT to be your handler.
+//  A 'false' argument is expected to generate an error.
+//	Otherwise define ASSERT() as ((void)0) (which does nothing).
+//	#include <assert.h>
+//	#define ASSERT(arg) assert(arg)
+	#define ASSERT(arg) ((void)(0))
 
 //********************************************************************************************************
 // Local defines
@@ -432,8 +438,8 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			case '-': placeholder.flag_minus = true;	break;
 			case '+': placeholder.sign_pad = '+';  		break;
 			case ' ': placeholder.sign_pad = ' ';  		break;
-			case '#': WARN(false);						break;	//unsupported flag
-			case '\'': WARN(false);						break;	//unsupported flag
+			case '#': WARN(true);						break;	//unsupported flag
+			case '\'': WARN(true);						break;	//unsupported flag
 			default : finished = true;        			break;
 		};
 		if(!finished)
