@@ -182,30 +182,30 @@
 
 #ifdef FIRST_PASS
 	static const char* parse_placeholder(struct placeholder_struct* placeholder, const char* fmtstr, bool is_pgm);
-	static void print_placeholder(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder);
+	static void print_placeholder(struct out_struct* out_info, union varg_union varg, struct placeholder_struct* placeholder);
 	static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va);
 
 #ifdef COL_ALIGNMENT
-	static const char* print_col_alignment(struct out_struct *out_info, const char* fmtstr, bool is_pgm);
+	static const char* print_col_alignment(struct out_struct* out_info, const char* fmtstr, bool is_pgm);
 #endif
 
-	static void print_bin(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
-	static void print_hex(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
-	static void print_dec(struct out_struct *out_info, struct placeholder_struct* placeholder, long value);
+	static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
+	static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
+	static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, long value);
 
 #ifdef SUPPORT_FLOAT
-	static void print_float(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend);
+	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
 	static const char* determine_float_msg(struct placeholder_struct* placeholder, float value);
 	static char determine_sign_char_of_float(struct placeholder_struct* placeholder, float value);
-	static void print_float_normal(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend);
-	static void print_float_special(struct out_struct *out_info, struct placeholder_struct* placeholder, const char* out_msg, float value);
+	static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
+	static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, float value);
 	static struct eng_struct get_eng(float value);
 	static unsigned long round_float_to_ulong(float x);
 	static uint_least8_t get_prec(struct placeholder_struct* placeholder);
 #endif
 
-	static void prepad(struct out_struct *out_info, struct placeholder_struct* placeholder, size_t source_len);
-	static void postpad(struct out_struct *out_info, struct placeholder_struct* placeholder, size_t source_len);
+	static void prepad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len);
+	static void postpad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len);
 	static bool is_type_int(uint_least8_t type);
 	static bool is_type_unsigned(uint_least8_t type);
 	static bool is_type_numeric(uint_least8_t type);
@@ -216,8 +216,8 @@
 	
 	static uint_least8_t ulong2asc_rev(char* buf, unsigned long i);
 
-	static void out_char(struct out_struct *out_info, char x);
-	static void out_terminate(struct out_struct *out_info);
+	static void out_char(struct out_struct* out_info, char x);
+	static void out_terminate(struct out_struct* out_info);
 
 	static void print_str(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm);
 	static int prnf_strlen(const char* str, bool is_pgm);
@@ -562,7 +562,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 	return fmtstr;
 }
 
-static void print_placeholder(struct out_struct *out_info, union varg_union varg, struct placeholder_struct* placeholder)
+static void print_placeholder(struct out_struct* out_info, union varg_union varg, struct placeholder_struct* placeholder)
 {
 	#ifdef SUPPORT_FLOAT
 		struct eng_struct eng;
@@ -607,14 +607,14 @@ static void print_placeholder(struct out_struct *out_info, union varg_union varg
 }
 
 //Handles both signed and unsigned decimal integers
-static void print_dec(struct out_struct *out_info, struct placeholder_struct* placeholder, long value)
+static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, long value)
 {
 	unsigned long uvalue;
 	int number_len = 1;
 	int zero_pad_len = 0;
 	char sign_char = 0;
 	char txt[DEC_BUF_SIZE];
-	char *txt_ptr;
+	char* txt_ptr;
 
 	if(is_type_unsigned(placeholder->type))
 		uvalue = (unsigned long)value;
@@ -661,7 +661,7 @@ static void print_dec(struct out_struct *out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, number_len);
 }
 
-static void print_bin(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
+static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
 {
 	int number_len;
 	unsigned long bit;
@@ -686,7 +686,7 @@ static void print_bin(struct out_struct *out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, number_len);
 }
 
-static void print_hex(struct out_struct *out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
+static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
 {
 	int number_len;
 	uint_least8_t offset;
@@ -714,7 +714,7 @@ static void print_hex(struct out_struct *out_info, struct placeholder_struct* pl
 
 #ifdef SUPPORT_FLOAT
 //	With precision of 3 printable range is +/- 4294967.295
-static void print_float(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend)
+static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend)
 {
 	const char* out_msg;
 
@@ -755,7 +755,7 @@ static const char* determine_float_msg(struct placeholder_struct* placeholder, f
 	return retval;
 }
 
-static void print_float_normal(struct out_struct *out_info, struct placeholder_struct* placeholder, float value, char postpend)
+static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend)
 {
 	uint_least8_t prec;
 	uint_least8_t number_len = 1;
@@ -821,7 +821,7 @@ static void print_float_normal(struct out_struct *out_info, struct placeholder_s
 
 // Floating point special cases
 // "NAN" , "-INF" , "INF" , "+INF" , " INF" , "-OVER" , "OVER" , "+OVER" , " OVER"
-static void print_float_special(struct out_struct *out_info, struct placeholder_struct* placeholder, const char* out_msg, float value)
+static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, float value)
 {
 	struct placeholder_struct ph = *placeholder;
 	int msg_len;
@@ -864,7 +864,7 @@ static char determine_sign_char_of_float(struct placeholder_struct* placeholder,
 }
 #endif	//^SUPPORT_FLOAT^
 
-static void print_str(struct out_struct *out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm)
+static void print_str(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm)
 {
 	int	source_len;
 	int cnt;
@@ -890,7 +890,7 @@ static void print_str(struct out_struct *out_info, struct placeholder_struct* pl
 // print colum alignment  \v<col><pad char>
 // if \v is encountered without <col> output \v
 // if \v is encountered with <col>, but <pad char> is the string terminator, output nothing
-static const char* print_col_alignment(struct out_struct *out_info, const char* fmtstr, bool is_pgm)
+static const char* print_col_alignment(struct out_struct* out_info, const char* fmtstr, bool is_pgm)
 {
 	int col = 0;
 	char pad_char;
@@ -934,7 +934,7 @@ static int prnf_strlen(const char* str, bool is_pgm)
 }
 
 // prepad the output to achieve width, if needed
-static void prepad(struct out_struct *out_info, struct placeholder_struct* placeholder, size_t source_len)
+static void prepad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len)
 {
 	int pad_len = 0;
 	char pad_char = ' ';
@@ -957,7 +957,7 @@ static void prepad(struct out_struct *out_info, struct placeholder_struct* place
 }
 
 // postpad the output to achieve width, if needed
-static void postpad(struct out_struct *out_info, struct placeholder_struct* placeholder, size_t source_len)
+static void postpad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len)
 {
 	int pad_len = 0;
 
@@ -1100,7 +1100,7 @@ static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
 // Calls function pointer to destinations character output OR writes to buffer
 // Truncates buffer output
 // Detects line endings and tracks colum (1st column is 0)
-static void out_char(struct out_struct *out_info, char x)
+static void out_char(struct out_struct* out_info, char x)
 {
 	if(out_info->buf && out_info->char_cnt+1 < out_info->size_limit)
 		*(out_info->buf++) = x;
@@ -1119,7 +1119,7 @@ static void out_char(struct out_struct *out_info, char x)
 }
 
 // possibly terminates output
-static void out_terminate(struct out_struct *out_info)
+static void out_terminate(struct out_struct* out_info)
 {
 	if(out_info->buf && out_info->size_limit)
 		*(out_info->buf) = 0;
