@@ -50,7 +50,8 @@
  [width]
  
  	The minimum number of characters to output.
-	Dynamic width using %* is NOT supported. A non-standard method of centering text is provided (see below).
+	If width is specified as * A dynamic width must be provided as an int argument preceding the argument to be formatted.
+	A non-standard method of centering text is also provided (see below).
 
 
  [.precision]
