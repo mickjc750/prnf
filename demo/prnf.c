@@ -206,7 +206,7 @@
 	#ifdef PLATFORM_AVR
 		static char fmt_rd_either(const char* fmt, bool is_pgm);
 	#endif
-
+ 
 #endif //FIRST_PASS
 
 //********************************************************************************************************
@@ -890,7 +890,7 @@ static const char* print_col_alignment(struct out_struct* out_info, const char* 
 
 	if(pad_char < 0x20)
 		pad_char = 0;
-
+	
 	if(!got_col)
 		out_char(out_info, '\v');
 	else if(pad_char)

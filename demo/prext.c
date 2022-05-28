@@ -9,8 +9,11 @@
 	#include <stdbool.h>
 	#include <stddef.h>
 	#include <stdarg.h>
-	#include <string.h>
 	#include <inttypes.h>
+	#include <string.h>
+	#include <time.h>
+	#include <complex.h>
+
 	#include "prnf.h"
 
 //	Include prnf configuration
@@ -25,6 +28,43 @@
 //********************************************************************************************************
 // Public functions
 //********************************************************************************************************
+
+int* prext_cplex_rec(complex float c)
+{
+	#define TXT_SIZE sizeof("(1234567890.1234567890, 1234567890.1234567890)")
+
+	char* txt = prnf_malloc(TXT_SIZE);
+	snprnf(txt, TXT_SIZE, "(%f, %f)", creal(c), cimag(c));
+
+	#undef TXT_SIZE
+	return (int*)txt;
+}
+
+int* prext_cplex_pol(complex float c)
+{
+	#define TXT_SIZE sizeof("(1234567890.1234567890 @1234567890.1234567890)")
+	
+	char* txt = prnf_malloc(TXT_SIZE);
+	snprnf(txt, TXT_SIZE, "(%f @%f)", cabsf(c), cargf(c));
+
+	#undef TXT_SIZE
+	return (int*)txt;
+}
+
+// fmt example "%y.%m.%d-%H:%M:%S"
+int* prext_tstamp(const char* fmt)
+{
+	#define TXT_SIZE 100
+
+	time_t tmr = time(NULL);
+	char* txt = prnf_malloc(TXT_SIZE);
+	ASSERT(txt);
+	txt[0] = 0;
+	strftime(txt, TXT_SIZE, fmt, localtime(&tmr));
+
+	#undef TXT_SIZE
+	return (int*)txt;
+}
 
 int* prext_period(uint32_t seconds)
 {
