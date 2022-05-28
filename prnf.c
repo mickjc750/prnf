@@ -436,7 +436,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 // parse textual placeholder information into a placeholder_struct
 static const char* parse_placeholder(struct placeholder_struct* dst, const char* fmtstr, bool is_pgm)
 {
-	struct placeholder_struct placeholder = {false, false, 0, false, 0, 0, false, sizeof(int), TYPE_NONE};
+	struct placeholder_struct placeholder = {.size_modifier=sizeof(int), .type=TYPE_NONE};
 	bool finished;
 
 	//Get flags
