@@ -31,18 +31,18 @@
 
  Supported [flags]:
 
-	- 			left align the output
+	- 		left align the output
 	 
-	+			prepends a + for positive numeric types
+	+		prepends a + for positive numeric types
 	 
 	(space)		prepends a space for positive numeric type
 
-	0 			prepends 0's instead of spaces to numeric types to satisfy [width]
+	0 		prepends 0's instead of spaces to numeric types to satisfy [width]
 
 
  Unsupported [flags]:
 
-	# 				If you want 0x it needs to be in your format string.
+	#		If you want 0x it needs to be in your format string.
 
 	' (apostrophe)	No 1000's separator is available
 
@@ -78,37 +78,37 @@
 
  Unsupported [length]:
 
-	ll			(long long) not supported
-	j			intmax_t not supported
+	ll		(long long) not supported
+	j		intmax_t not supported
 
 
  Supported types:
 
-  	d,i			Signed decimal integer
-  	u			Unsigned decimal integer
+  	d,i		Signed decimal integer
+  	u		Unsigned decimal integer
   	x,X  		Hexadecimal. Always uppercase, .precision defaults to argument size [length]
-  	o			NOT Octal. Actually binary, .precision defaults to argument size [length]
-  	s			null-terminated string in ram, or NULL. Outputs nothing for NULL.
-	S			For AVR targets, read string from PROGMEM, otherwise same as %s
-  	c			character 
+  	o		NOT Octal. Actually binary, .precision defaults to argument size [length]
+  	s		null-terminated string in ram, or NULL. Outputs nothing for NULL.
+	S		For AVR targets, read string from PROGMEM, otherwise same as %s
+  	c		character 
 
-	f,F			Floating point (not double). NAN & INF are always uppercase.
-				Default precision is 3 (not 6).
-				Digits printed must be able to be represented by an unsigned long,
-				ie. with a precision of 3, maximum range is +/- 4294967.296 
-				Values outside this range will produce "OVER".
-				A value of 0.0 is always positive. 
+	f,F		Floating point (not double). NAN & INF are always uppercase.
+			Default precision is 3 (not 6).
+			Digits printed must be able to be represented by an unsigned long,
+			ie. with a precision of 3, maximum range is +/- 4294967.296 
+			Values outside this range will produce "OVER".
+			A value of 0.0 is always positive. 
 
-	e			NOT exponential. Floating point with engineering notation (y z a f p n u m - k M G T P E Z Y).
-				Number is postpended with the SI prefix. Default precision is 0.
+	e		NOT exponential. Floating point with engineering notation (y z a f p n u m - k M G T P E Z Y).
+			Number is postpended with the SI prefix. Default precision is 0.
  
 
  Unsupported types:
 
 	g,G 		Adaptive floats not available
-	a,A			Double in hex notation not available
-	p			Pointer not available
-	n			classic %n is not available, but %n may be repurposed for extensions if enabled (see below)
+	a,A		Double in hex notation not available
+	p		Pointer not available
+	n		classic %n is not available, but %n may be repurposed for extensions if enabled (see below)
 
 <br>
 <br>
@@ -244,7 +244,7 @@ The required format is:
 	\v<col><pad character>
 
 
-\v should be followed by a decimal number indicating the column on which the following text will start on (with 0 being the first column). The character used for padding is the first non-numeric digit after this number. Note that due to this, digits cannot be used as the padding character. This feature is useful if you have output which contains fields of uncontrolled length, and then wish to align further output. If the current column is already at or past the column specified, then no padding will be applied. If \v occurs in your string without being followed by digits, then a regular \v character will be output.<br>
+\v should be followed by a decimal number indicating the column on which the following text will start on (with 0 being the first column). The character used for padding is the first non-numeric character after this number. Note that due to this, digits cannot be used as the padding character. This feature is useful if you have output which contains fields of uncontrolled length, and then wish to align further output. If the current column is already at or past the column specified, then no padding will be applied. If \v occurs in your string without being followed by digits, then a regular \v character will be output.<br>
 Example:
 
 	prnf("%s:%.4i(%s)\v30 %s\n", __FILE__, __LINE__, __func__, "This text starts on column 30");
