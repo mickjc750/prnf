@@ -11,35 +11,8 @@
 
 	#include "prnf.h"
 
-//********************************************************************************************************
-// Configurable defines
-//********************************************************************************************************
-
-	#define SUPPORT_FLOAT
-	#define ENG_PREC_DEFAULT 	0
-	#define FLOAT_PREC_DEFAULT 	3
-
-//	Remove this if you wish to output normal vertical line feeds (\v) from your format string
-	#define COL_ALIGNMENT
-
-//	To enable extensions, uncomment this #define, and include your memory allocator,
-//	define prnf_free() to be your allocators free() function.
-//	#define SUPPORT_EXTENSIONS
-//	#include <stdlib.h>
-//	#define prnf_free(arg) 	free(arg)
-
-//	If you have a runtime warning handler, include it here and define WARN to be your handler.
-//  A 'true' argument is expected to generate a warning.
-//	Otherwise define WARN() as ((void)0) (which does nothing).
-//	#include "warn.h"
-	#define WARN(arg) ((void)(0))
-
-//	If you have an assertion handler, include it here and define ASSERT to be your handler.
-//  A 'false' argument is expected to generate an error.
-//	Otherwise define ASSERT() as ((void)0) (which does nothing).
-//	#include <assert.h>
-//	#define ASSERT(arg) assert(arg)
-	#define ASSERT(arg) ((void)(0))
+//	Include configurable defines
+	#include "prnf_conf.h"
 
 //********************************************************************************************************
 // Local defines
