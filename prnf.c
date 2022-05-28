@@ -87,6 +87,7 @@
 		int 	width;
 		int 	prec;
 		bool	prec_is_dynamic;
+		bool 	width_is_dynamic;
 		uint_least8_t size_modifier;	//equal to size of int, or size of specified type (l h hh etc)
 		uint_least8_t type;				//TYPE_x
 	};
@@ -161,7 +162,7 @@
 //********************************************************************************************************
 // Public variables
 //********************************************************************************************************
-	
+
 #ifdef FIRST_PASS
 //	Default character output, may be pointed at an application provided putchar(void*, charx)
 //	The void* is passed a NULL
@@ -348,6 +349,16 @@ static char fmt_rd_either(const char* fmt, bool is_pgm)
 #define READ_VARG(dst, placeholder, src) 											\
 do																					\
 {																					\
+	if(placeholder.width_is_dynamic)												\
+	{																				\
+		placeholder.width = va_arg(va, int);										\
+		if(placeholder.width < 0)													\
+		{																			\
+			placeholder.width = -placeholder.width;									\
+			placeholder.flag_minus = true;											\
+		};																			\
+	};																				\
+																					\
 	if(placeholder.prec_is_dynamic)													\
 		placeholder.prec = va_arg(va, int);											\
 																					\
@@ -447,7 +458,13 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 	}while(!finished);
 
 	//Get width
-	placeholder.width = prnf_atoi(&fmtstr, is_pgm);
+	if(FMTRD(fmtstr) == '*')
+	{
+		placeholder.width_is_dynamic = true;
+		fmtstr++;
+	}
+	else
+		placeholder.width = prnf_atoi(&fmtstr, is_pgm);
 
 	//Get precision
 	if(FMTRD(fmtstr) == '.')
