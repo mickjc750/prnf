@@ -120,7 +120,7 @@ If you wish to write code which is cross compatible with AVR and non-AVR, use th
 these will place string literals in PROGMEM for AVR targets and produce normal string literals for 'normal' von-newman targets.
 
 
-On AVR, both the the format sring, and string arguments, may be in either ram or program memory. See the header for more detailed useage.
+On AVR, both the the format string, and string arguments, may be in either ram or program memory. See the header for more detailed usage.
    
 
 
@@ -197,7 +197,7 @@ The PRNF_ARG_SL() macro simply puts string literals into program memory on AVR t
 # Adding prnf() functionality to other IO modules:
 
 This can easily be achieved by writing your own character handler, and variadic function for the module.
-Then the variadic version of fptrprnf (vfptrprnf) can be used to print to your character handler.
+Then the non-variadic version of fptrprnf (vfptrprnf) can be used to print to your character handler.
 
 An example for lcd_prnf() may look something like:
 
@@ -236,7 +236,7 @@ This is useful in situations where you may need to iterate through a number of f
 # Column alignment
 
 
-This feature is enabled by default, but can be disabled in the configuration section of prnf.c
+This feature is enabled by default, but can be disabled in prnf_conf.h
 
 It is possible to advance output to a specific column, with respect to the start of the output, or the last line ending. To achieve this prnf hijacks the \v (vertical tab) character.
 The required format is:
