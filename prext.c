@@ -16,7 +16,7 @@
 //	Include prnf configuration
 	#include "prnf_conf.h"
 
-#ifdef SUPPORT_EXTENSIONS
+#ifdef PRNF_SUPPORT_EXTENSIONS
 
 	#ifndef prnf_malloc
 	#error You are compiling prext.c (prnf extensions), but have not configured a memory allocator in prnf_conf.h
