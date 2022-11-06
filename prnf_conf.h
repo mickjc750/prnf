@@ -5,21 +5,21 @@
 //	If defined, %f and %e will be available
 	#define PRNF_SUPPORT_FLOAT
 
+//	If defined, double arguments will not be demoted to float, and prnf will use double arithmetic.
+//	#define PRNF_SUPPORT_DOUBLE
+
 //	If defined, support long long
 //	#define PRNF_SUPPORT_LONG_LONG
 
 //	Default precision for %e (engineering) notation
 	#define PRNF_ENG_PREC_DEFAULT 	0
 
-
 //	Default precision for %f (floats)
 	#define PRNF_FLOAT_PREC_DEFAULT 	3
-
 
 //	Provide column alignment using \v (see readme.md)
 //	Remove this if you wish to output normal vertical line feeds (\v) from your format string
 	#define PRNF_COL_ALIGNMENT
-
 
 //	To enable extensions (%n), uncomment this #define, and include your memory allocator,
 //	define prnf_free() to be your memory allocators free() function.
