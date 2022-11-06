@@ -28,6 +28,15 @@
 		#define PRNF_ULONG_MAX	ULONG_MAX
 	#endif
 
+	#ifdef PRNF_SUPPORT_DOUBLE
+		typedef double prnf_float_t;
+		#ifndef PRNF_SUPPORT_FLOAT
+			#define PRNF_SUPPORT_FLOAT
+		#endif
+	#else
+		typedef float prnf_float_t;
+	#endif
+
 	#if PRNF_ULONG_MAX == 4294967295U
 		#define DEC_BUF_SIZE 	10
 		#define FLOAT_PREC_MAX	9
@@ -92,7 +101,7 @@
 
 	struct eng_struct
 	{
-		float value;
+		prnf_float_t value;
 		char prefix;
 	};
 
@@ -105,7 +114,7 @@
 		unsigned long ul;
 		int i;
 		unsigned int ui;
-		float f;
+		prnf_float_t f;
 		char* str;
 		char c;
 	};
@@ -162,9 +171,9 @@
 #ifdef FIRST_PASS
 #ifdef PRNF_SUPPORT_FLOAT
 	#ifdef LONG_IS_32
-		static float pow10_tbl[10] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F};
+		static prnf_float_t pow10_tbl[10] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F};
 	#else
-		static float pow10_tbl[20] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F, 1E10F, 1E11F, 1E12F, 1E13F, 1E14F, 1E15F, 1E16F, 1E17F, 1E18F, 1E19F};
+		static prnf_float_t pow10_tbl[20] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F, 1E10F, 1E11F, 1E12F, 1E13F, 1E14F, 1E15F, 1E16F, 1E17F, 1E18F, 1E19F};
 	#endif
 #endif
 #endif
@@ -187,13 +196,13 @@
 	static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value);
 
 #ifdef PRNF_SUPPORT_FLOAT
-	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
-	static const char* determine_float_msg(struct placeholder_struct* placeholder, float value);
-	static char determine_sign_char_of_float(struct placeholder_struct* placeholder, float value);
-	static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
-	static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, float value);
-	static struct eng_struct get_eng(float value);
-	static prnf_ulong_t round_float_to_ulong(float x);
+	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend);
+	static const char* determine_float_msg(struct placeholder_struct* placeholder, prnf_float_t value);
+	static char determine_sign_char_of_float(struct placeholder_struct* placeholder, prnf_float_t value);
+	static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend);
+	static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, prnf_float_t value);
+	static struct eng_struct get_eng(prnf_float_t value);
+	static prnf_ulong_t round_float_to_ulong(prnf_float_t x);
 	static uint_least8_t get_prec(struct placeholder_struct* placeholder);
 #endif
 
@@ -370,7 +379,7 @@ do																					\
 		};																			\
 	}																				\
 	else if(placeholder.type == TYPE_FLOAT || placeholder.type == TYPE_ENG)			\
-		dst.f = (float)va_arg(src, double);											\
+		dst.f = (prnf_float_t)va_arg(src, double);											\
 																					\
 	else if(placeholder.type == TYPE_CHAR)											\
 		dst.c = (char)va_arg(src, int);												\
@@ -734,7 +743,7 @@ static void print_hex(struct out_struct* out_info, struct placeholder_struct* pl
 
 #ifdef PRNF_SUPPORT_FLOAT
 //	With precision of 3 printable range is +/- 4294967.295
-static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend)
+static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend)
 {
 	const char* out_msg;
 
@@ -746,7 +755,7 @@ static void print_float(struct out_struct* out_info, struct placeholder_struct* 
 }
 
 // Return FLOAT_CASE_x
-static const char* determine_float_msg(struct placeholder_struct* placeholder, float value)
+static const char* determine_float_msg(struct placeholder_struct* placeholder, prnf_float_t value)
 {
 	char* retval = NULL;
 	int prec;
@@ -768,14 +777,14 @@ static const char* determine_float_msg(struct placeholder_struct* placeholder, f
 		value *= pow10_tbl[prec];
 
 		// Check within printable range
-		if(value >= (float)PRNF_ULONG_MAX)
+		if(value >= (prnf_float_t)PRNF_ULONG_MAX)
 			retval = "OVER";
 	};
 
 	return retval;
 }
 
-static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend)
+static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend)
 {
 	uint_least8_t prec;
 	uint_least8_t number_len = 1;
@@ -841,7 +850,7 @@ static void print_float_normal(struct out_struct* out_info, struct placeholder_s
 
 // Floating point special cases
 // "NAN" , "-INF" , "INF" , "+INF" , " INF" , "-OVER" , "OVER" , "+OVER" , " OVER"
-static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, float value)
+static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, prnf_float_t value)
 {
 	struct placeholder_struct ph = *placeholder;
 	int msg_len;
@@ -865,7 +874,7 @@ static void print_float_special(struct out_struct* out_info, struct placeholder_
 }
 
 // +, - , <space> or 0
-static char determine_sign_char_of_float(struct placeholder_struct* placeholder, float value)
+static char determine_sign_char_of_float(struct placeholder_struct* placeholder, prnf_float_t value)
 {
 	char sign_char = 0;
 	bool neg = (value < 0.0F);
@@ -1057,7 +1066,7 @@ static char ascii_hex_digit(uint_least8_t x)
 }
 
 #ifdef PRNF_SUPPORT_FLOAT
-static struct eng_struct get_eng(float value)
+static struct eng_struct get_eng(prnf_float_t value)
 {
 	struct eng_struct retval;
 	uint8_t i = 8;
@@ -1100,13 +1109,13 @@ static uint_least8_t get_prec(struct placeholder_struct* placeholder)
 	return prec;
 }
 
-static prnf_ulong_t round_float_to_ulong(float x)
+static prnf_ulong_t round_float_to_ulong(prnf_float_t x)
 {
 	prnf_ulong_t retval;
 
 	retval = (prnf_ulong_t)x;
 
-	if(x - (float)retval >= 0.5)
+	if(x - (prnf_float_t)retval >= 0.5)
 		retval++;
 
 	return retval;
