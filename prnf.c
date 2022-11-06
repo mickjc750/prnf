@@ -26,6 +26,9 @@
 		typedef long prnf_long_t;
 		typedef unsigned long prnf_ulong_t;
 		#define PRNF_ULONG_MAX	ULONG_MAX
+		#if SIZE_MAX > ULONG_NAX
+			#warning "size_t is larger than unsigned long, and support for long long is not enabled. You should define PRNF_SUPPORT_LONG_LONG if you intend to use %z placeholders"
+		#endif
 	#endif
 
 	#ifdef PRNF_SUPPORT_DOUBLE
@@ -379,7 +382,7 @@ do																					\
 		};																			\
 	}																				\
 	else if(placeholder.type == TYPE_FLOAT || placeholder.type == TYPE_ENG)			\
-		dst.f = (prnf_float_t)va_arg(src, double);											\
+		dst.f = (prnf_float_t)va_arg(src, double);									\
 																					\
 	else if(placeholder.type == TYPE_CHAR)											\
 		dst.c = (char)va_arg(src, int);												\
