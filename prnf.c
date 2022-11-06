@@ -1114,16 +1114,34 @@ static prnf_ulong_t round_float_to_ulong(float x)
 #endif  //^PRNF_SUPPORT_FLOAT^
 
 //convert prnf_ulong_t to decimal reversed
-static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t i)
+static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t il)
 {
 	uint_least8_t digit_count = 0;
+	unsigned int i;
 
-	do
+	//long or long long arithmetic
+	while(il > UINT_MAX)
+	{
+		*buf++ = '0' + (il % 10);
+		il = il / 10;
+		digit_count++;
+	};
+
+	//finish with int arithmetic
+	i = il;
+	while(i)
 	{
 		*buf++ = '0' + (i % 10);
 		i = i / 10;
 		digit_count++;
-	}while(i);
+	};
+
+	//produce at least a single 0
+	if(!digit_count)
+	{
+		*buf++ = '0';
+		digit_count++;
+	};
 
 	return digit_count;
 }
