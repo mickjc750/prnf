@@ -5,6 +5,8 @@
 //	If defined, %f and %e will be available
 	#define PRNF_SUPPORT_FLOAT
 
+//	If defined, support long long
+//	#define PRNF_SUPPORT_LONG_LONG
 
 //	Default precision for %e (engineering) notation
 	#define PRNF_ENG_PREC_DEFAULT 	0

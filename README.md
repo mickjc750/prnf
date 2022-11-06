@@ -12,12 +12,13 @@
  * Low stack & ram usage, zero heap usage.
  * Full support for AVR's PROGMEM requirements, with almost no cost to non-AVR targets.
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
- * no double or long long arithmetic, (doubles get demoted to float internally).
+ * Optional support for long long.
+ * no double arithmetic, (doubles get demoted to float internally).
  
  * NO exponential form, %e provides SI units (y z a f p n u m - k M G T P E Z Y).
  * NO Octal, %o outputs binary instead, (who wants octal?)
  * NO adaptive %g %G
- * NO support for long long 
+ 
  
  Build size on avr with -Os is ~5kb with float support, and ~3kb without float
 
@@ -74,12 +75,12 @@
 	hh 		Expect an int-sized argument which was promoted from a char.
 	h 		Expect an int-sized argument which was promoted from a short.
 	l		Expect a long-sized argument.
+	ll		Expect a long long sized argument. ** DISABLED BY DEFAULT, YOU MUST #define PRNF_SUPPORT_LONG_LONG in prnf_conf.h
 	z		Expect a size_t sized argument (size_t must not be larger than long).
 	t		Expect a ptrdiff_t sized argument (ptrdiff_t must not be larger than long).
 
  Unsupported [length]:
 
-	ll		(long long) not supported
 	j		intmax_t not supported
 
 
