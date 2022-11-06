@@ -18,16 +18,29 @@
 // Local defines
 //********************************************************************************************************
 
+	#ifdef PRNF_SUPPORT_LONG_LONG
+		typedef long long prnf_long_t;
+		typedef unsigned long long prnf_ulong_t;
+		#define PRNF_ULONG_MAX	ULLONG_MAX
+	#else
+		typedef long prnf_long_t;
+		typedef unsigned long prnf_ulong_t;
+		#define PRNF_ULONG_MAX	ULONG_MAX
+	#endif
 
-	#if ULONG_MAX == 4294967295U
+	#if PRNF_ULONG_MAX == 4294967295U
 		#define DEC_BUF_SIZE 	10
 		#define FLOAT_PREC_MAX	9
 		#define LONG_IS_32
-	#elif ULONG_MAX == 18446744073709551615U
+	#elif PRNF_ULONG_MAX == 18446744073709551615U
 		#define DEC_BUF_SIZE 	20
 		#define FLOAT_PREC_MAX	19
 	#else
-		#error Long is not 32bit or 64bit
+		#ifdef PRNF_SUPPORT_LONG_LONG
+			#error Long Long is not 32bit or 64bit
+		#else
+			#error Long is not 32bit or 64bit
+		#endif
 	#endif
 
 	#define NO_PREFIX	0
@@ -86,6 +99,8 @@
 	//A union capable of holding any type of argument passed in the variable argument list
 	union varg_union
 	{
+		prnf_long_t prnf_l;
+		prnf_ulong_t prnf_ul;
 		long l;
 		unsigned long ul;
 		int i;
@@ -167,9 +182,9 @@
 	static const char* print_col_alignment(struct out_struct* out_info, const char* fmtstr, bool is_pgm);
 #endif
 
-	static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
-	static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
-	static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, long value);
+	static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue);
+	static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue);
+	static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value);
 
 #ifdef PRNF_SUPPORT_FLOAT
 	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
@@ -178,7 +193,7 @@
 	static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
 	static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, float value);
 	static struct eng_struct get_eng(float value);
-	static unsigned long round_float_to_ulong(float x);
+	static prnf_ulong_t round_float_to_ulong(float x);
 	static uint_least8_t get_prec(struct placeholder_struct* placeholder);
 #endif
 
@@ -192,7 +207,7 @@
 	static bool prnf_is_digit(char x);
 	static char ascii_hex_digit(uint_least8_t x);
 	
-	static uint_least8_t ulong2asc_rev(char* buf, unsigned long i);
+	static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t i);
 
 	static void out_char(struct out_struct* out_info, char x);
 	static void out_terminate(struct out_struct* out_info);
@@ -335,15 +350,23 @@ do																					\
 																					\
 	if(is_type_int(placeholder.type))												\
 	{																				\
-		if(placeholder.size_modifier == sizeof(long))								\
+		if(placeholder.size_modifier == sizeof(prnf_ulong_t))						\
+			dst.prnf_ul = va_arg(src, prnf_ulong_t);								\
+		else if(placeholder.size_modifier == sizeof(long))							\
+		{																			\
 			dst.ul = va_arg(src, unsigned long);									\
+			if(is_type_unsigned(placeholder.type))									\
+				dst.prnf_ul = dst.ul;												\
+			else																	\
+				dst.prnf_l = dst.l;													\
+		}																			\
 		else																		\
 		{																			\
 			dst.ui = va_arg(src, unsigned int);										\
 			if(is_type_unsigned(placeholder.type))									\
-				dst.ul = dst.ui;													\
+				dst.prnf_ul = dst.ui;												\
 			else																	\
-				dst.l = dst.i;														\
+				dst.prnf_l = dst.i;													\
 		};																			\
 	}																				\
 	else if(placeholder.type == TYPE_FLOAT || placeholder.type == TYPE_ENG)			\
@@ -467,8 +490,18 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 
 		case 'l' :
 			fmtstr++;
-			PRNF_ASSERT(FMTRD(fmtstr) != 'l');	//unsupported long long
-			placeholder.size_modifier = sizeof(long);
+			#ifdef PRNF_SUPPORT_LONG_LONG
+				if(FMTRD(fmtstr) == 'l')
+				{
+					placeholder.size_modifier = sizeof(long long);
+					fmtstr++;
+				}
+				else
+					placeholder.size_modifier = sizeof(long);
+			#else
+				PRNF_ASSERT(FMTRD(fmtstr) != 'l');	//unsupported long long
+				placeholder.size_modifier = sizeof(long);
+			#endif
 			break;
 
 		case 't' :
@@ -555,13 +588,13 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 	#endif
 
 	if(placeholder->type == TYPE_INT || placeholder->type == TYPE_UINT)
-		print_dec(out_info, placeholder, varg.l);
+		print_dec(out_info, placeholder, varg.prnf_l);
 	
 	else if(placeholder->type == TYPE_BIN)
-		print_bin(out_info, placeholder, varg.ul);
+		print_bin(out_info, placeholder, varg.prnf_ul);
 				
 	else if(placeholder->type == TYPE_HEX)
-		print_hex(out_info, placeholder, varg.ul);
+		print_hex(out_info, placeholder, varg.prnf_ul);
 
 #ifdef PRNF_SUPPORT_FLOAT
 	else if(placeholder->type == TYPE_FLOAT)
@@ -593,9 +626,9 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 }
 
 //Handles both signed and unsigned decimal integers
-static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, long value)
+static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value)
 {
-	unsigned long uvalue;
+	prnf_ulong_t uvalue;
 	int number_len = 1;
 	int zero_pad_len = 0;
 	char sign_char = 0;
@@ -603,7 +636,7 @@ static void print_dec(struct out_struct* out_info, struct placeholder_struct* pl
 	char* txt_ptr;
 
 	if(is_type_unsigned(placeholder->type))
-		uvalue = (unsigned long)value;
+		uvalue = (prnf_ulong_t)value;
 	else
 	{
 		uvalue = value;
@@ -647,10 +680,10 @@ static void print_dec(struct out_struct* out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, number_len);
 }
 
-static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
+static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
 {
 	int number_len;
-	unsigned long bit;
+	prnf_ulong_t bit;
 
 	//determine number of digits
 	if(placeholder->prec_specified)
@@ -661,7 +694,8 @@ static void print_bin(struct out_struct* out_info, struct placeholder_struct* pl
 	//prepad number length to satisfy width  (if specified)
 	prepad(out_info, placeholder, number_len);
 
-	bit = 1UL<<(number_len-1);
+	bit = 1;
+	bit <<= number_len-1;
 	while(bit)
 	{
 		out_char(out_info, (uvalue & bit)? '1':'0');
@@ -672,7 +706,7 @@ static void print_bin(struct out_struct* out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, number_len);
 }
 
-static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
+static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
 {
 	int number_len;
 	uint_least8_t offset;
@@ -746,7 +780,7 @@ static void print_float_normal(struct out_struct* out_info, struct placeholder_s
 	uint_least8_t prec;
 	uint_least8_t number_len = 1;
 	uint_least8_t radix_pos = -1;
-	unsigned long uvalue;
+	prnf_ulong_t uvalue;
 	char sign_char;
 	char txt[DEC_BUF_SIZE];
 	char* txt_ptr;
@@ -1066,11 +1100,11 @@ static uint_least8_t get_prec(struct placeholder_struct* placeholder)
 	return prec;
 }
 
-static unsigned long round_float_to_ulong(float x)
+static prnf_ulong_t round_float_to_ulong(float x)
 {
-	unsigned long retval;
+	prnf_ulong_t retval;
 
-	retval = (unsigned long)x;
+	retval = (prnf_ulong_t)x;
 
 	if(x - (float)retval >= 0.5)
 		retval++;
@@ -1079,8 +1113,8 @@ static unsigned long round_float_to_ulong(float x)
 }
 #endif  //^PRNF_SUPPORT_FLOAT^
 
-//convert unsigned long to decimal reversed
-static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
+//convert prnf_ulong_t to decimal reversed
+static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t i)
 {
 	uint_least8_t digit_count = 0;
 
