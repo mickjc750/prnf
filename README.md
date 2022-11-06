@@ -32,18 +32,18 @@
 
  Supported [flags]:
 
-    - 		left align the output
+    -       left align the output
      
-    +		prepends a + for positive numeric types
+    +       prepends a + for positive numeric types
      
-    (space)	prepends a space for positive numeric type
+    (space) prepends a space for positive numeric type
 
-    0 		prepends 0's instead of spaces to numeric types to satisfy [width]
+    0       prepends 0's instead of spaces to numeric types to satisfy [width]
 
 
  Unsupported [flags]:
 
-    #		If you want 0x it needs to be in your format string.
+    #       If you want 0x it needs to be in your format string.
 
     ' (apostrophe)	No 1000's separator is available
 
