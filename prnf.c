@@ -768,7 +768,7 @@ static const char* determine_float_msg(struct placeholder_struct* placeholder, f
 		value *= pow10_tbl[prec];
 
 		// Check within printable range
-		if(value >= (float)ULONG_MAX)
+		if(value >= (float)PRNF_ULONG_MAX)
 			retval = "OVER";
 	};
 
