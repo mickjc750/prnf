@@ -31,7 +31,7 @@ int* prext_period(uint32_t seconds)
 	#define TXT_SIZE (sizeof("XXy XXXd XXh XXm XXs"))
 	char* txt;
 	txt = prnf_malloc(TXT_SIZE);
-	ASSERT(txt);
+	PRNF_ASSERT(txt);
 	txt[0] = 0;
 
 	if(seconds >= 31536000)

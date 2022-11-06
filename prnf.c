@@ -492,7 +492,10 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			fmtstr++;
 			#ifdef PRNF_SUPPORT_LONG_LONG
 				if(FMTRD(fmtstr) == 'l')
+				{
 					placeholder.size_modifier = sizeof(long long);
+					fmtstr++;
+				}
 				else
 					placeholder.size_modifier = sizeof(long);
 			#else
