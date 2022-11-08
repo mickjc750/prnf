@@ -18,16 +18,41 @@
 // Local defines
 //********************************************************************************************************
 
+	#ifdef PRNF_SUPPORT_LONG_LONG
+		typedef long long prnf_long_t;
+		typedef unsigned long long prnf_ulong_t;
+		#define PRNF_ULONG_MAX	ULLONG_MAX
+	#else
+		typedef long prnf_long_t;
+		typedef unsigned long prnf_ulong_t;
+		#define PRNF_ULONG_MAX	ULONG_MAX
+		#if SIZE_MAX > ULONG_NAX
+			#warning "size_t is larger than unsigned long, and support for long long is not enabled. You should define PRNF_SUPPORT_LONG_LONG if you intend to use %z placeholders"
+		#endif
+	#endif
 
-	#if ULONG_MAX == 4294967295U
+	#ifdef PRNF_SUPPORT_DOUBLE
+		typedef double prnf_float_t;
+		#ifndef PRNF_SUPPORT_FLOAT
+			#define PRNF_SUPPORT_FLOAT
+		#endif
+	#else
+		typedef float prnf_float_t;
+	#endif
+
+	#if PRNF_ULONG_MAX == 4294967295U
 		#define DEC_BUF_SIZE 	10
 		#define FLOAT_PREC_MAX	9
 		#define LONG_IS_32
-	#elif ULONG_MAX == 18446744073709551615U
+	#elif PRNF_ULONG_MAX == 18446744073709551615U
 		#define DEC_BUF_SIZE 	20
 		#define FLOAT_PREC_MAX	19
 	#else
-		#error Long is not 32bit or 64bit
+		#ifdef PRNF_SUPPORT_LONG_LONG
+			#error Long Long is not 32bit or 64bit
+		#else
+			#error Long is not 32bit or 64bit
+		#endif
 	#endif
 
 	#define NO_PREFIX	0
@@ -39,7 +64,7 @@
 		#define SIZE_MAX ((size_t)(ssize_t)(-1))
 	#endif
 
-	#ifdef SUPPORT_FLOAT
+	#ifdef PRNF_SUPPORT_FLOAT
 		#include <float.h>
 	#endif
 
@@ -67,7 +92,7 @@
 
 	struct out_struct
 	{
-		#ifdef COL_ALIGNMENT
+		#ifdef PRNF_COL_ALIGNMENT
 		int 	col;
 		#endif
 		int		char_cnt;
@@ -79,25 +104,25 @@
 
 	struct eng_struct
 	{
-		float value;
+		prnf_float_t value;
 		char prefix;
 	};
 
 	//A union capable of holding any type of argument passed in the variable argument list
 	union varg_union
 	{
+		prnf_long_t prnf_l;
+		prnf_ulong_t prnf_ul;
 		long l;
 		unsigned long ul;
 		int i;
 		unsigned int ui;
-		float f;
+		prnf_float_t f;
 		char* str;
 		char c;
 	};
 
-	#ifdef SUPPORT_EXTENSIONS
 	#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders."
-	#endif
 
 #endif	//FIRST PASS
 
@@ -147,11 +172,11 @@
 //********************************************************************************************************
 
 #ifdef FIRST_PASS
-#ifdef SUPPORT_FLOAT
+#ifdef PRNF_SUPPORT_FLOAT
 	#ifdef LONG_IS_32
-		static float pow10_tbl[10] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F};
+		static prnf_float_t pow10_tbl[10] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F};
 	#else
-		static float pow10_tbl[20] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F, 1E10F, 1E11F, 1E12F, 1E13F, 1E14F, 1E15F, 1E16F, 1E17F, 1E18F, 1E19F};
+		static prnf_float_t pow10_tbl[20] = {1E0F, 1E1F, 1E2F, 1E3F, 1E4F, 1E5F, 1E6F, 1E7F, 1E8F, 1E9F, 1E10F, 1E11F, 1E12F, 1E13F, 1E14F, 1E15F, 1E16F, 1E17F, 1E18F, 1E19F};
 	#endif
 #endif
 #endif
@@ -165,22 +190,22 @@
 	static void print_placeholder(struct out_struct* out_info, union varg_union varg, struct placeholder_struct* placeholder);
 	static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pgm, va_list va);
 
-#ifdef COL_ALIGNMENT
+#ifdef PRNF_COL_ALIGNMENT
 	static const char* print_col_alignment(struct out_struct* out_info, const char* fmtstr, bool is_pgm);
 #endif
 
-	static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
-	static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue);
-	static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, long value);
+	static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue);
+	static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue);
+	static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value);
 
-#ifdef SUPPORT_FLOAT
-	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
-	static const char* determine_float_msg(struct placeholder_struct* placeholder, float value);
-	static char determine_sign_char_of_float(struct placeholder_struct* placeholder, float value);
-	static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend);
-	static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, float value);
-	static struct eng_struct get_eng(float value);
-	static unsigned long round_float_to_ulong(float x);
+#ifdef PRNF_SUPPORT_FLOAT
+	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend);
+	static const char* determine_float_msg(struct placeholder_struct* placeholder, prnf_float_t value);
+	static char determine_sign_char_of_float(struct placeholder_struct* placeholder, prnf_float_t value);
+	static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend);
+	static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, prnf_float_t value);
+	static struct eng_struct get_eng(prnf_float_t value);
+	static prnf_ulong_t round_float_to_ulong(prnf_float_t x);
 	static uint_least8_t get_prec(struct placeholder_struct* placeholder);
 #endif
 
@@ -194,7 +219,7 @@
 	static bool prnf_is_digit(char x);
 	static char ascii_hex_digit(uint_least8_t x);
 	
-	static uint_least8_t ulong2asc_rev(char* buf, unsigned long i);
+	static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t i);
 
 	static void out_char(struct out_struct* out_info, char x);
 	static void out_terminate(struct out_struct* out_info);
@@ -206,7 +231,7 @@
 	#ifdef PLATFORM_AVR
 		static char fmt_rd_either(const char* fmt, bool is_pgm);
 	#endif
- 
+
 #endif //FIRST_PASS
 
 //********************************************************************************************************
@@ -337,19 +362,27 @@ do																					\
 																					\
 	if(is_type_int(placeholder.type))												\
 	{																				\
-		if(placeholder.size_modifier == sizeof(long))								\
+		if(placeholder.size_modifier == sizeof(prnf_ulong_t))						\
+			dst.prnf_ul = va_arg(src, prnf_ulong_t);								\
+		else if(placeholder.size_modifier == sizeof(long))							\
+		{																			\
 			dst.ul = va_arg(src, unsigned long);									\
+			if(is_type_unsigned(placeholder.type))									\
+				dst.prnf_ul = dst.ul;												\
+			else																	\
+				dst.prnf_l = dst.l;													\
+		}																			\
 		else																		\
 		{																			\
 			dst.ui = va_arg(src, unsigned int);										\
 			if(is_type_unsigned(placeholder.type))									\
-				dst.ul = dst.ui;													\
+				dst.prnf_ul = dst.ui;												\
 			else																	\
-				dst.l = dst.i;														\
+				dst.prnf_l = dst.i;													\
 		};																			\
 	}																				\
 	else if(placeholder.type == TYPE_FLOAT || placeholder.type == TYPE_ENG)			\
-		dst.f = (float)va_arg(src, double);											\
+		dst.f = (prnf_float_t)va_arg(src, double);									\
 																					\
 	else if(placeholder.type == TYPE_CHAR)											\
 		dst.c = (char)va_arg(src, int);												\
@@ -385,7 +418,7 @@ static int core_prnf(struct out_struct* out_info, const char* fmtstr, bool is_pg
 				print_placeholder(out_info, varg, &placeholder);
 			};
 		}
-		#ifdef COL_ALIGNMENT
+		#ifdef PRNF_COL_ALIGNMENT
 		// colum alignment?
 		else if(FMTRD(fmtstr) == '\v')
 		{
@@ -422,8 +455,8 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			case '-': placeholder.flag_minus = true;	break;
 			case '+': placeholder.sign_pad = '+';  		break;
 			case ' ': placeholder.sign_pad = ' ';  		break;
-			case '#': WARN(true);						break;	//unsupported flag
-			case '\'': WARN(true);						break;	//unsupported flag
+			case '#': PRNF_WARN(true);					break;	//unsupported flag
+			case '\'': PRNF_WARN(true);					break;	//unsupported flag
 			default : finished = true;        			break;
 		};
 		if(!finished)
@@ -469,8 +502,18 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 
 		case 'l' :
 			fmtstr++;
-			ASSERT(FMTRD(fmtstr) != 'l');	//unsupported long long
-			placeholder.size_modifier = sizeof(long);
+			#ifdef PRNF_SUPPORT_LONG_LONG
+				if(FMTRD(fmtstr) == 'l')
+				{
+					placeholder.size_modifier = sizeof(long long);
+					fmtstr++;
+				}
+				else
+					placeholder.size_modifier = sizeof(long);
+			#else
+				PRNF_ASSERT(FMTRD(fmtstr) != 'l');	//unsupported long long
+				placeholder.size_modifier = sizeof(long);
+			#endif
 			break;
 
 		case 't' :
@@ -485,7 +528,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 
 		case 'L' :	//unsupported long double
 		case 'j' :	//unsupported intmax_t
-			ASSERT(false);
+			PRNF_ASSERT(false);
 	};
 
 	//Get type
@@ -509,7 +552,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			placeholder.type = TYPE_HEX;
 			break;
 
-#ifdef SUPPORT_FLOAT
+#ifdef PRNF_SUPPORT_FLOAT
 		case 'f' :
 		case 'F' :
 			placeholder.type = TYPE_FLOAT;
@@ -530,7 +573,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			placeholder.type = TYPE_STR;
 			break;
 
-		#ifdef SUPPORT_EXTENSIONS
+		#ifdef PRNF_SUPPORT_EXTENSIONS
 		case 'n' :
 			placeholder.type = TYPE_NSTR;
 			break;
@@ -541,7 +584,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			break;
 		
 		default :
-			ASSERT(false);	//unsupported type
+			PRNF_ASSERT(false);	//unsupported type
 			break;
 	};
 	fmtstr++;
@@ -552,20 +595,20 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 
 static void print_placeholder(struct out_struct* out_info, union varg_union varg, struct placeholder_struct* placeholder)
 {
-	#ifdef SUPPORT_FLOAT
+	#ifdef PRNF_SUPPORT_FLOAT
 		struct eng_struct eng;
 	#endif
 
 	if(placeholder->type == TYPE_INT || placeholder->type == TYPE_UINT)
-		print_dec(out_info, placeholder, varg.l);
+		print_dec(out_info, placeholder, varg.prnf_l);
 	
 	else if(placeholder->type == TYPE_BIN)
-		print_bin(out_info, placeholder, varg.ul);
+		print_bin(out_info, placeholder, varg.prnf_ul);
 				
 	else if(placeholder->type == TYPE_HEX)
-		print_hex(out_info, placeholder, varg.ul);
+		print_hex(out_info, placeholder, varg.prnf_ul);
 
-#ifdef SUPPORT_FLOAT
+#ifdef PRNF_SUPPORT_FLOAT
 	else if(placeholder->type == TYPE_FLOAT)
 		print_float(out_info, placeholder, varg.f, NO_PREFIX);
 
@@ -585,7 +628,7 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 	else if(placeholder->type == TYPE_PSTR)
 		print_str(out_info, placeholder, varg.str, IS_PGM);
 	#endif
-	#ifdef SUPPORT_EXTENSIONS
+	#ifdef PRNF_SUPPORT_EXTENSIONS
 	else if(placeholder->type == TYPE_NSTR)
 	{
 		print_str(out_info, placeholder, varg.str, IS_NOT_PGM);
@@ -595,9 +638,9 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 }
 
 //Handles both signed and unsigned decimal integers
-static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, long value)
+static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value)
 {
-	unsigned long uvalue;
+	prnf_ulong_t uvalue;
 	int number_len = 1;
 	int zero_pad_len = 0;
 	char sign_char = 0;
@@ -605,7 +648,7 @@ static void print_dec(struct out_struct* out_info, struct placeholder_struct* pl
 	char* txt_ptr;
 
 	if(is_type_unsigned(placeholder->type))
-		uvalue = (unsigned long)value;
+		uvalue = (prnf_ulong_t)value;
 	else
 	{
 		uvalue = value;
@@ -649,10 +692,10 @@ static void print_dec(struct out_struct* out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, number_len);
 }
 
-static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
+static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
 {
 	int number_len;
-	unsigned long bit;
+	prnf_ulong_t bit;
 
 	//determine number of digits
 	if(placeholder->prec_specified)
@@ -663,7 +706,8 @@ static void print_bin(struct out_struct* out_info, struct placeholder_struct* pl
 	//prepad number length to satisfy width  (if specified)
 	prepad(out_info, placeholder, number_len);
 
-	bit = 1UL<<(number_len-1);
+	bit = 1;
+	bit <<= number_len-1;
 	while(bit)
 	{
 		out_char(out_info, (uvalue & bit)? '1':'0');
@@ -674,7 +718,7 @@ static void print_bin(struct out_struct* out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, number_len);
 }
 
-static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, unsigned long uvalue)
+static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
 {
 	int number_len;
 	uint_least8_t offset;
@@ -700,9 +744,9 @@ static void print_hex(struct out_struct* out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, number_len);
 }
 
-#ifdef SUPPORT_FLOAT
+#ifdef PRNF_SUPPORT_FLOAT
 //	With precision of 3 printable range is +/- 4294967.295
-static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend)
+static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend)
 {
 	const char* out_msg;
 
@@ -714,7 +758,7 @@ static void print_float(struct out_struct* out_info, struct placeholder_struct* 
 }
 
 // Return FLOAT_CASE_x
-static const char* determine_float_msg(struct placeholder_struct* placeholder, float value)
+static const char* determine_float_msg(struct placeholder_struct* placeholder, prnf_float_t value)
 {
 	char* retval = NULL;
 	int prec;
@@ -736,19 +780,19 @@ static const char* determine_float_msg(struct placeholder_struct* placeholder, f
 		value *= pow10_tbl[prec];
 
 		// Check within printable range
-		if(value >= (float)ULONG_MAX)
+		if(value >= (prnf_float_t)PRNF_ULONG_MAX)
 			retval = "OVER";
 	};
 
 	return retval;
 }
 
-static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, float value, char postpend)
+static void print_float_normal(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend)
 {
 	uint_least8_t prec;
 	uint_least8_t number_len = 1;
 	uint_least8_t radix_pos = -1;
-	unsigned long uvalue;
+	prnf_ulong_t uvalue;
 	char sign_char;
 	char txt[DEC_BUF_SIZE];
 	char* txt_ptr;
@@ -809,7 +853,7 @@ static void print_float_normal(struct out_struct* out_info, struct placeholder_s
 
 // Floating point special cases
 // "NAN" , "-INF" , "INF" , "+INF" , " INF" , "-OVER" , "OVER" , "+OVER" , " OVER"
-static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, float value)
+static void print_float_special(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* out_msg, prnf_float_t value)
 {
 	struct placeholder_struct ph = *placeholder;
 	int msg_len;
@@ -833,7 +877,7 @@ static void print_float_special(struct out_struct* out_info, struct placeholder_
 }
 
 // +, - , <space> or 0
-static char determine_sign_char_of_float(struct placeholder_struct* placeholder, float value)
+static char determine_sign_char_of_float(struct placeholder_struct* placeholder, prnf_float_t value)
 {
 	char sign_char = 0;
 	bool neg = (value < 0.0F);
@@ -850,7 +894,7 @@ static char determine_sign_char_of_float(struct placeholder_struct* placeholder,
 
 	return sign_char;
 }
-#endif	//^SUPPORT_FLOAT^
+#endif	//^PRNF_SUPPORT_FLOAT^
 
 static void print_str(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm)
 {
@@ -874,7 +918,7 @@ static void print_str(struct out_struct* out_info, struct placeholder_struct* pl
 	postpad(out_info, placeholder, source_len);
 }
 
-#ifdef COL_ALIGNMENT
+#ifdef PRNF_COL_ALIGNMENT
 // print colum alignment  \v<col><pad char>
 // if \v is encountered without <col> output \v
 // if \v is encountered with <col>, but <pad char> is the string terminator, output nothing
@@ -890,7 +934,7 @@ static const char* print_col_alignment(struct out_struct* out_info, const char* 
 
 	if(pad_char < 0x20)
 		pad_char = 0;
-	
+
 	if(!got_col)
 		out_char(out_info, '\v');
 	else if(pad_char)
@@ -1024,8 +1068,8 @@ static char ascii_hex_digit(uint_least8_t x)
 	return retval;
 }
 
-#ifdef SUPPORT_FLOAT
-static struct eng_struct get_eng(float value)
+#ifdef PRNF_SUPPORT_FLOAT
+static struct eng_struct get_eng(prnf_float_t value)
 {
 	struct eng_struct retval;
 	uint8_t i = 8;
@@ -1055,43 +1099,61 @@ static uint_least8_t get_prec(struct placeholder_struct* placeholder)
 	if(placeholder->prec_specified)
 		prec = placeholder->prec;
 	else if(placeholder->type == TYPE_ENG)
-		prec = ENG_PREC_DEFAULT;
+		prec = PRNF_ENG_PREC_DEFAULT;
 	else
-	 	prec = FLOAT_PREC_DEFAULT;
+	 	prec = PRNF_FLOAT_PREC_DEFAULT;
 
 	if(prec > FLOAT_PREC_MAX)
 	{
-		ASSERT(false);
+		PRNF_ASSERT(false);
 		prec = FLOAT_PREC_MAX;	//limit precision if no assertion handler is available
 	};
 
 	return prec;
 }
 
-static unsigned long round_float_to_ulong(float x)
+static prnf_ulong_t round_float_to_ulong(prnf_float_t x)
 {
-	unsigned long retval;
+	prnf_ulong_t retval;
 
-	retval = (unsigned long)x;
+	retval = (prnf_ulong_t)x;
 
-	if(x - (float)retval >= 0.5)
+	if(x - (prnf_float_t)retval >= 0.5)
 		retval++;
 
 	return retval;
 }
-#endif  //^SUPPORT_FLOAT^
+#endif  //^PRNF_SUPPORT_FLOAT^
 
-//convert unsigned long to decimal reversed
-static uint_least8_t ulong2asc_rev(char* buf, unsigned long i)
+//convert prnf_ulong_t to decimal reversed
+static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t il)
 {
 	uint_least8_t digit_count = 0;
+	unsigned int i;
 
-	do
+	//long or long long arithmetic
+	while(il > UINT_MAX)
+	{
+		*buf++ = '0' + (il % 10);
+		il = il / 10;
+		digit_count++;
+	};
+
+	//finish with int arithmetic
+	i = il;
+	while(i)
 	{
 		*buf++ = '0' + (i % 10);
 		i = i / 10;
 		digit_count++;
-	}while(i);
+	};
+
+	//produce at least a single 0
+	if(!digit_count)
+	{
+		*buf++ = '0';
+		digit_count++;
+	};
 
 	return digit_count;
 }
@@ -1109,7 +1171,7 @@ static void out_char(struct out_struct* out_info, char x)
 	else if(out_info->dst_fptr)
 		out_info->dst_fptr(out_info->dst_fptr_vars, x);
 
-	#ifdef COL_ALIGNMENT
+	#ifdef PRNF_COL_ALIGNMENT
 		if(x=='\r' || x=='\n')
 				out_info->col = 0;
 		else if(x > 0x1F)

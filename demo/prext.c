@@ -19,7 +19,7 @@
 //	Include prnf configuration
 	#include "prnf_conf.h"
 
-#ifdef SUPPORT_EXTENSIONS
+#ifdef PRNF_SUPPORT_EXTENSIONS
 
 	#ifndef prnf_malloc
 	#error You are compiling prext.c (prnf extensions), but have not configured a memory allocator in prnf_conf.h
@@ -58,7 +58,7 @@ int* prext_tstamp(const char* fmt)
 
 	time_t tmr = time(NULL);
 	char* txt = prnf_malloc(TXT_SIZE);
-	ASSERT(txt);
+	PRNF_ASSERT(txt);
 	txt[0] = 0;
 	strftime(txt, TXT_SIZE, fmt, localtime(&tmr));
 
@@ -71,7 +71,7 @@ int* prext_period(uint32_t seconds)
 	#define TXT_SIZE (sizeof("XXy XXXd XXh XXm XXs"))
 	char* txt;
 	txt = prnf_malloc(TXT_SIZE);
-	ASSERT(txt);
+	PRNF_ASSERT(txt);
 	txt[0] = 0;
 
 	if(seconds >= 31536000)

@@ -19,11 +19,9 @@
  * NO Octal, %o outputs binary instead, (who wants octal?)
  * NO adaptive %g %G
  
+<br>
  
- Build size on avr with -Os is ~5kb with float support, and ~3kb without float
-
-
-
+ 
  Standard placeholder syntax:
 
     %[flags][width][.precision][length]type
@@ -124,7 +122,11 @@ If you wish to write code which is cross compatible with AVR and non-AVR, use th
 these will place string literals in PROGMEM for AVR targets and produce normal string literals for 'normal' von-newman targets.
 
 
-On AVR, both the the format sring, and string arguments, may be in either ram or program memory. See the header for more detailed useage.
+On AVR, both the the format string, and string arguments, may be in either ram or program memory.
+
+ Unlike avr-libc, prnf DOES provide argument type checking using some macro tricks. This works by putting a do-nothing function which takes format checking into a while(0) loop. The compiler will perform the format checking, then remove the do-nothing function, providing some level of optimization is enabled.
+
+
    
 <br>
 <br>
@@ -304,7 +306,35 @@ Note that if you mistakenly mix up %s and %n, you will get a compilation warning
 <br>
 <br>
 
+# Questions regarding extensions:
+
+Q. Why cannibalize %n when there are so many letters left in the alphabet?
+
+1. GCC (and probably most compilers) will check the format string and issue a warning "unknown specifier %"
+2. Unsupported specifiers offer no argument type checking.
+3. The standard behavior of %n does not appear to be useful, (if you do use it, please share why).
+
+Q. Why not just make functions to output the custom strings instead of passing them to prnf?
+
+  A. Consider you use vprnf to create yourself a uart_prnf() lcd_prnf(), and also use snprnf(), snappf(), and fptrprnf().
+You can pass your custom strings to any of these functions.
+
+<br>
+<br>
+
 # Issues
+
+__No test suite__
+
+ While I do test prnf, I do so with my own ugly test that I don't want to publish here. It would be nice to have something publicly available. I'm open to suggestions as to what the best test framework is for C projects. Perhaps https://github.com/silentbicycle/greatest ?
+
+<br>
+
+__Ugly readme__
+
+ If you made it this far, you can see I'm not too good with markdown... Any tips/tutorials welcome.
+
+<br>
 
 Please raise an issue if you find a bug (unlikely), or even if you find any of the above instructions confusing.
 I'm willing to help.
