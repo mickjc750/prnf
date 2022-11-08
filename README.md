@@ -19,6 +19,8 @@
  * NO Octal, %o outputs binary instead, (who wants octal?)
  * NO adaptive %g %G
  
+ If you're a linux user, for a demonstration you can type 'make' then './demo' in the /demo folder.
+ 
 <br>
  
  
