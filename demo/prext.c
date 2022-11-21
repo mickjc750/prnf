@@ -68,7 +68,7 @@ int* prext_tstamp(const char* fmt)
 
 int* prext_period(uint32_t seconds)
 {
-	#define TXT_SIZE (sizeof("XXy XXXd XXh XXm XXs"))
+	#define TXT_SIZE (sizeof("XXy XXXd XXh XXm XXs "))
 	char* txt;
 	txt = prnf_malloc(TXT_SIZE);
 	PRNF_ASSERT(txt);
