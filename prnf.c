@@ -96,7 +96,7 @@
 		int 	col;
 		#endif
 		int		char_cnt;
-		size_t	size_limit;
+		int	size_limit;
 		char* 	buf;
 		void* 	dst_fptr_vars;
 		void(*dst_fptr)(void*, char);
@@ -122,7 +122,9 @@
 		char c;
 	};
 
-	#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders."
+	#ifndef PRNF_DONT_WARN
+		#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders."
+	#endif
 
 #endif	//FIRST PASS
 
@@ -209,8 +211,8 @@
 	static uint_least8_t get_prec(struct placeholder_struct* placeholder);
 #endif
 
-	static void prepad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len);
-	static void postpad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len);
+	static void prepad(struct out_struct* out_info, struct placeholder_struct* placeholder, int source_len);
+	static void postpad(struct out_struct* out_info, struct placeholder_struct* placeholder, int source_len);
 	static bool is_type_int(uint_least8_t type);
 	static bool is_type_unsigned(uint_least8_t type);
 	static bool is_type_numeric(uint_least8_t type);
@@ -312,7 +314,7 @@ int vprnf_PX(const char* fmtstr, va_list va)
 
 int vsprnf_PX(char* dst, const char* fmtstr, va_list va)
 {
-	struct out_struct out_info = {.size_limit=SIZE_MAX, .buf=dst};
+	struct out_struct out_info = {.size_limit=INT_MAX, .buf=dst};
 	return core_prnf(&out_info, fmtstr, IS_SECOND_PASS, va);
 }
 
@@ -950,6 +952,7 @@ static const char* print_col_alignment(struct out_struct* out_info, const char* 
 
 static int prnf_strlen(const char* str, bool is_pgm)
 {
+	(void)is_pgm;
 	int retval = 0;
 
 	if(str)
@@ -965,6 +968,7 @@ static int prnf_strlen(const char* str, bool is_pgm)
 
 static int prnf_atoi(const char** fmtstr, bool is_pgm)
 {
+	(void)is_pgm;
 	int value = 0;
 
 	//Get width
@@ -979,7 +983,7 @@ static int prnf_atoi(const char** fmtstr, bool is_pgm)
 }
 
 // prepad the output to achieve width, if needed
-static void prepad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len)
+static void prepad(struct out_struct* out_info, struct placeholder_struct* placeholder, int source_len)
 {
 	int pad_len = 0;
 	char pad_char = ' ';
@@ -1002,7 +1006,7 @@ static void prepad(struct out_struct* out_info, struct placeholder_struct* place
 }
 
 // postpad the output to achieve width, if needed
-static void postpad(struct out_struct* out_info, struct placeholder_struct* placeholder, size_t source_len)
+static void postpad(struct out_struct* out_info, struct placeholder_struct* placeholder, int source_len)
 {
 	int pad_len = 0;
 
