@@ -26,7 +26,7 @@
 		typedef long prnf_long_t;
 		typedef unsigned long prnf_ulong_t;
 		#define PRNF_ULONG_MAX	ULONG_MAX
-		#if SIZE_MAX > ULONG_NAX
+		#if SIZE_MAX > ULONG_MAX
 			#warning "size_t is larger than unsigned long, and support for long long is not enabled. You should define PRNF_SUPPORT_LONG_LONG if you intend to use %z placeholders"
 		#endif
 	#endif
