@@ -123,7 +123,7 @@
 	};
 
 	#ifndef PRNF_DONT_WARN
-		#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders."
+		#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders. Define PRNF_DONT_WARN to disable this warning."
 	#endif
 
 #endif	//FIRST PASS
