@@ -244,7 +244,7 @@ This is useful in situations where you may need to iterate through a number of f
 # Column alignment
 
 
-This feature is enabled by default, but can be disabled in the configuration section of prnf.c<br>
+To enable this feature put -DPRNF_COL_ALIGNMENT in your compiler flags<br>
 
 It is possible to advance output to a specific column, with respect to the start of the output, or the last line ending. To achieve this prnf hijacks the \v (vertical tab) character.<br>
 The required format is:
@@ -324,17 +324,20 @@ You can pass your custom strings to any of these functions.
 <br>
 <br>
 
+# How to enable extensions
+
+ * Create a configuration file similar to prnf_cfg.h in this repository.
+ * Add -DPRNF_CFG_FILE=prnf_cfg.h to compiler flags, avoiding spaces around the =
+ * Add your own extensions file similar to prext.c and prext.h in this repository.
+
+<br>
+<br>
+
 # Issues
 
 __No test suite__
 
  While I do test prnf, I do so with my own ugly test that I don't want to publish here. It would be nice to have something publicly available. I'm open to suggestions as to what the best test framework is for C projects. Perhaps https://github.com/silentbicycle/greatest ?
-
-<br>
-
-__Ugly readme__
-
- If you made it this far, you can see I'm not too good with markdown... Any tips/tutorials welcome.
 
 <br>
 
