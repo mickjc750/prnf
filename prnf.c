@@ -68,6 +68,7 @@
 		#include <float.h>
 	#endif
 
+//	Macro for reading characters from the format string. For AVR we may need to read from PROGMEM or RAM so fmt_rd_either() is used.
 	#ifdef PLATFORM_AVR
 		#define FMTRD(_fmt) 	fmt_rd_either(_fmt, is_pgm)
 	#else
@@ -96,7 +97,7 @@
 		int 	col;
 		#endif
 		int		char_cnt;
-		int	size_limit;
+		int		size_limit;
 		char* 	buf;
 		void* 	dst_fptr_vars;
 		void(*dst_fptr)(void*, char);
@@ -108,7 +109,7 @@
 		char prefix;
 	};
 
-	//A union capable of holding any type of argument passed in the variable argument list
+//	A union capable of holding any type of argument passed in the variable argument list
 	union varg_union
 	{
 		prnf_long_t prnf_l;
@@ -121,10 +122,6 @@
 		char* str;
 		char c;
 	};
-
-	#ifndef PRNF_DONT_WARN
-		#warning "This application uses a non-standard printf-like text formatter. See prnf.h for details before attempting to use printf() style placeholders."
-	#endif
 
 #endif	//FIRST PASS
 
@@ -239,6 +236,11 @@
 //********************************************************************************************************
 // Public functions
 //********************************************************************************************************
+
+
+// On AVR platforms these _PX functions are compiled twice.
+// On the first pass prnf_PX expands to prnf which reads the format string from RAM.
+// On the second pass prnf_PX expands to prnf_P which reads the format string from PROGMEM.
 
 int prnf_PX(const char* fmtstr, ...)
 {
