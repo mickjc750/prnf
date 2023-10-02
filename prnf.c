@@ -11,12 +11,32 @@
 
 	#include "prnf.h"
 
-//	Include configurable defines
-	#include "prnf_conf.h"
-
 //********************************************************************************************************
 // Local defines
 //********************************************************************************************************
+
+//	Include configuration file if one has been provided (see prnf.h)
+	#ifdef PRNF_CFG_FILE
+	#define prnfcfg_xstr(s) prnfcfg_str(s)
+	#define prnfcfg_str(s) #s
+	#include prnfcfg_xstr(PRNF_CFG_FILE)
+	#endif
+
+	#ifndef PRNF_ENG_PREC_DEFAULT
+		#define PRNF_ENG_PREC_DEFAULT 0
+	#endif
+
+	#ifndef PRNF_FLOAT_PREC_DEFAULT
+		#define PRNF_FLOAT_PREC_DEFAULT 3
+	#endif
+
+	#ifndef PRNF_WARN
+		#define PRNF_WARN	((void)0)
+	#endif
+
+	#ifndef PRNF_ASSERT
+		#define PRNF_ASSERT	((void)0)
+	#endif
 
 	#ifdef PRNF_SUPPORT_LONG_LONG
 		typedef long long prnf_long_t;

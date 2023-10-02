@@ -13,13 +13,17 @@
 	#include <inttypes.h>
 	#include "prnf.h"
 
-//	Include prnf configuration
-	#include "prnf_conf.h"
+//	Include the configuration file PRNF_CFG_FILE (see prnf.h)
+	#define prnfcfg_xstr(s) prnfcfg_str(s)
+	#define prnfcfg_str(s) #s
+	#include prnfcfg_xstr(PRNF_CFG_FILE)
 
-#ifdef PRNF_SUPPORT_EXTENSIONS
+	#ifndef PRNF_SUPPORT_EXTENSIONS
+	#error You are compiling prext.c (prnf extensions), but have not enabled extensions in your config file.
+	#endif
 
 	#ifndef prnf_malloc
-	#error You are compiling prext.c (prnf extensions), but have not configured a memory allocator in prnf_conf.h
+	#error You are compiling prext.c (prnf extensions), but have not configured a memory allocator in your config file.
 	#endif
 
 //********************************************************************************************************

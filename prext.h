@@ -3,7 +3,7 @@
 
  To use:
 
- 1. Ensure you have enabled SUPPORT_EXTENSIONS in prnf_conf.h and defined prnf_malloc() and prnf_free()
+ 1. Ensure you have enabled SUPPORT_EXTENSIONS in prnf_cfg.h and defined prnf_malloc() and prnf_free()
 
  2. Include prext.h and prext.c in your build.
 
