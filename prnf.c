@@ -31,11 +31,11 @@
 	#endif
 
 	#ifndef PRNF_WARN
-		#define PRNF_WARN	((void)0)
+		#define PRNF_WARN(arg)	((void)0)
 	#endif
 
 	#ifndef PRNF_ASSERT
-		#define PRNF_ASSERT	((void)0)
+		#define PRNF_ASSERT(arg)	((void)0)
 	#endif
 
 	#ifdef PRNF_SUPPORT_LONG_LONG

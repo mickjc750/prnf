@@ -24,12 +24,22 @@
 #define _PRNF_EXT_H_
 
 	#include <stdint.h>
+	#include <complex.h>
 
 //********************************************************************************************************
 // Public prototypes
 //********************************************************************************************************
 
+//	Formatted time stamp using strftime()
+	int* prext_tstamp(const char* fmt);
+
 //	Describe period in the form XXy XXd XXh XXm XXs
 	int* prext_period(uint32_t seconds);
+
+//	Complex number in rectangular form
+	int* prext_cplex_rec(complex float c);
+
+//	Complex number in polar form (radians)
+	int* prext_cplex_pol(complex float c);
 
 #endif // _PRNF_H_
