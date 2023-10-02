@@ -30,14 +30,14 @@
 //	#define prnf_malloc(arg) 	malloc(arg)
 
 
-//	If you have a runtime warning handler, include it here and define WARN to be your handler.
+//	If you have a runtime warning handler, include it here and define PRNF_WARN to be your handler.
 //  A 'true' argument is expected to generate a warning.
 //	Otherwise define PRNF_WARN() as ((void)0) (which does nothing).
 //	#include "warn.h"
 	#define PRNF_WARN(arg) ((void)(0))
 
 
-//	If you have an assertion handler, include it here and define ASSERT to be your handler.
+//	If you have an assertion handler, include it here and define PRNF_ASSERT to be your handler.
 //  A 'false' argument is expected to generate an error.
 //	Otherwise define PRNF_ASSERT() as ((void)0) (which does nothing).
 //	#include <assert.h>

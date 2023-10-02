@@ -4,7 +4,7 @@
  A lightweight printf implementation.
  With some reasonable limitations, and non-standard behavior suited to microcontrollers.
  
- * Thread and re-enterant safe.
+ * Thread and re-entrant safe.
  * Low stack & ram usage, zero heap usage.
  * Full support for AVR's PROGMEM requirements, with almost no cost to non-AVR targets.
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
@@ -166,16 +166,16 @@ See README.md for more info.
 
 	If you have modules that you wish to compile for both AVR and non-AVR targets, you can use the _SL (String Literal) macro wrappers.
 	These will put string literals in PROGMEM for AVR targets only.
-	The argument list will still be tested using a duiplicate format string in ram,
+	The argument list will still be tested using a duplicate format string in ram,
 	 but optimisation (any level) must be enabled to remove the ram duplicate.
 
 	PRNF_ARG_SL() is for passing string literals as arguments to %S (upper case) placeholders.
 
 	Arguments can safely use operators ie. prnf_SL("%i", i++);
 
-	The following two examples will put all string literals in PROGMEM for AVR targets, and ram for non-avr targets.
-		prnf_SL("%-50\n", PRNF_ARG_SL("LEFT"));
-		prnf_SL("%50\n", PRNF_ARG_SL("RIGHT"));
+	The following two examples will put all string literals in PROGMEM for AVR targets.
+		prnf_SL("%-50S\n", PRNF_ARG_SL("LEFT"));
+		prnf_SL("%50S\n", PRNF_ARG_SL("RIGHT"));
 */
 
 #ifdef PLATFORM_AVR
