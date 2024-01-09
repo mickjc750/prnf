@@ -14,16 +14,16 @@ Support long long
 	-DPRNF_SUPPORT_LONG_LONG
 
 Default precision for %e (engineering) notation
-	-DPRNF_ENG_PREC_DEFAULT = 0
+	-DPRNF_ENG_PREC_DEFAULT=0
 
 Default precision for %f (floats)
-	-DPRNF_FLOAT_PREC_DEFAULT = 3
+	-DPRNF_FLOAT_PREC_DEFAULT=3
 
 Provide column alignment using \v (see readme.md)
 	-DPRNF_COL_ALIGNMENT
 
 Include a file which may provide configuration for extensions and error handling (see sample).
-	-DPRNF_CFG_FILE = prnf_cfg.h
+	-DPRNF_CFG_FILE=prnf_cfg.h
 
 Build alternate _P versions of functions which read format strings from PROGMEM on AVR targets
 	-DPLATFORM_AVR
