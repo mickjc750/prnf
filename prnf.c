@@ -61,11 +61,11 @@
 	#endif
 
 	#if PRNF_ULONG_MAX == 4294967295U
-		#define DEC_BUF_SIZE 	10
+		#define INT_BUF_SIZE 	32
 		#define FLOAT_PREC_MAX	9
 		#define LONG_IS_32
 	#elif PRNF_ULONG_MAX == 18446744073709551615U
-		#define DEC_BUF_SIZE 	20
+		#define INT_BUF_SIZE 	64
 		#define FLOAT_PREC_MAX	19
 	#else
 		#ifdef PRNF_SUPPORT_LONG_LONG
@@ -213,9 +213,7 @@
 	static const char* print_col_alignment(struct out_struct* out_info, const char* fmtstr, bool is_pgm);
 #endif
 
-	static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue);
-	static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue);
-	static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value);
+	static void print_int(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value);
 
 #ifdef PRNF_SUPPORT_FLOAT
 	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend);
@@ -238,7 +236,9 @@
 	static bool prnf_is_digit(char x);
 	static char ascii_hex_digit(uint_least8_t x);
 	
-	static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t i);
+	static uint_least8_t ulong2asc_revdec(char* buf, prnf_ulong_t il);
+	static uint_least8_t ulong2asc_revbin(char* buf, prnf_ulong_t il);
+	static uint_least8_t ulong2asc_revhex(char* buf, prnf_ulong_t il);
 
 	static void out_char(struct out_struct* out_info, char x);
 	static void out_terminate(struct out_struct* out_info);
@@ -623,14 +623,8 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 		struct eng_struct eng;
 	#endif
 
-	if(placeholder->type == TYPE_INT || placeholder->type == TYPE_UINT)
-		print_dec(out_info, placeholder, varg.prnf_l);
-	
-	else if(placeholder->type == TYPE_BIN)
-		print_bin(out_info, placeholder, varg.prnf_ul);
-				
-	else if(placeholder->type == TYPE_HEX)
-		print_hex(out_info, placeholder, varg.prnf_ul);
+	if(is_type_int(placeholder->type))
+		print_int(out_info, placeholder, varg.prnf_l);
 
 #ifdef PRNF_SUPPORT_FLOAT
 	else if(placeholder->type == TYPE_FLOAT)
@@ -661,14 +655,14 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 	#endif
 }
 
-//Handles both signed and unsigned decimal integers
-static void print_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value)
+//Handles both signed and unsigned integers
+static void print_int(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value)
 {
 	prnf_ulong_t uvalue;
 	int number_len = 1;
 	int zero_pad_len = 0;
 	char sign_char = 0;
-	char txt[DEC_BUF_SIZE];
+	char txt[INT_BUF_SIZE];
 	char* txt_ptr;
 
 	if(is_type_unsigned(placeholder->type))
@@ -685,7 +679,13 @@ static void print_dec(struct out_struct* out_info, struct placeholder_struct* pl
 			sign_char = placeholder->sign_pad;
 	};
 
-	number_len = ulong2asc_rev(txt, uvalue);
+	if(placeholder->type == TYPE_BIN)
+		number_len = ulong2asc_revbin(txt, uvalue);
+	else if(placeholder->type == TYPE_HEX)
+		number_len = ulong2asc_revhex(txt, uvalue);
+	else 
+		number_len = ulong2asc_revdec(txt, uvalue);
+
 	txt_ptr = &txt[number_len];
 
 	//if more digits required, determine amount of zero padding
@@ -711,58 +711,6 @@ static void print_dec(struct out_struct* out_info, struct placeholder_struct* pl
 		txt_ptr--;
 		out_char(out_info, *txt_ptr);
 	}while(txt_ptr != txt);
-
-	//postpad number length to satisfy width  (if specified)
-	postpad(out_info, placeholder, number_len);
-}
-
-static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
-{
-	int number_len;
-	prnf_ulong_t bit;
-
-	//determine number of digits
-	if(placeholder->prec_specified)
-		number_len = placeholder->prec;
-	else
-		number_len = placeholder->size_modifier * 8;
-
-	//prepad number length to satisfy width  (if specified)
-	prepad(out_info, placeholder, number_len);
-
-	bit = 1;
-	bit <<= number_len-1;
-	while(bit)
-	{
-		out_char(out_info, (uvalue & bit)? '1':'0');
-		bit >>= 1;
-	};
-
-	//postpad number length to satisfy width  (if specified)
-	postpad(out_info, placeholder, number_len);
-}
-
-static void print_hex(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
-{
-	int number_len;
-	uint_least8_t offset;
-
-	//determine number of digits
-	if(placeholder->prec_specified)
-		number_len = placeholder->prec;
-	else
-		number_len = placeholder->size_modifier * 2;
-
-	//prepad number length to satisfy width  (if specified)
-	prepad(out_info, placeholder, number_len);
-
-	offset = number_len*4;
-
-	do
-	{
-		offset -= 4;
-		out_char(out_info, ascii_hex_digit((uint_least8_t)(uvalue >> offset)));
-	}while(offset);
 
 	//postpad number length to satisfy width  (if specified)
 	postpad(out_info, placeholder, number_len);
@@ -832,7 +780,7 @@ static void print_float_normal(struct out_struct* out_info, struct placeholder_s
 	uvalue = round_float_to_ulong(value);
 
 	//determine number of digits
-	number_len = ulong2asc_rev(txt, uvalue);
+	number_len = ulong2asc_revdec(txt, uvalue);
 	txt_ptr = &txt[number_len];
 
 	//minimum number of digits is .precision +1 as we always print a 0 on the left of the decimal point
@@ -1151,36 +1099,63 @@ static prnf_ulong_t round_float_to_ulong(prnf_float_t x)
 }
 #endif  //^PRNF_SUPPORT_FLOAT^
 
+
+// Number conversion macro, allows better optimisation of % and / operations on literal values.
+// Drops to int arithmetic ASAP to improve performance
+#define ulong2asc_base(buf, il, base)	\
+do										\
+{										\
+	while(il > UINT_MAX)				\
+	{									\
+		*buf++ = to_digit(il % base);	\
+		il = il / base;					\
+		digit_count++;					\
+	};									\
+	i = il;								\
+	while(i)							\
+	{									\
+		*buf++ = to_digit(i % base);	\
+		i = i / base;					\
+		digit_count++;					\
+	};									\
+	if(!digit_count)					\
+	{									\
+		*buf++ = '0';					\
+		digit_count++;					\
+	};									\
+}while(false)
+
 //convert prnf_ulong_t to decimal reversed
-static uint_least8_t ulong2asc_rev(char* buf, prnf_ulong_t il)
+static uint_least8_t ulong2asc_revdec(char* buf, prnf_ulong_t il)
 {
 	uint_least8_t digit_count = 0;
 	unsigned int i;
+	#define to_digit(x) ('0'+(x))
+	ulong2asc_base(buf, il, 10);
+	#undef to_digit
+	return digit_count;
+}
 
-	//long or long long arithmetic
-	while(il > UINT_MAX)
-	{
-		*buf++ = '0' + (il % 10);
-		il = il / 10;
-		digit_count++;
-	};
+//convert prnf_ulong_t to binary reversed
+static uint_least8_t ulong2asc_revbin(char* buf, prnf_ulong_t il)
+{
+	uint_least8_t digit_count = 0;
+	unsigned int i;
+	#define to_digit(x) ('0'+(x))
+	ulong2asc_base(buf, il, 2);
+	#undef to_digit
+	return digit_count;
+}
 
-	//finish with int arithmetic
-	i = il;
-	while(i)
-	{
-		*buf++ = '0' + (i % 10);
-		i = i / 10;
-		digit_count++;
-	};
-
-	//produce at least a single 0
-	if(!digit_count)
-	{
-		*buf++ = '0';
-		digit_count++;
-	};
-
+//convert prnf_ulong_t to hex reversed
+static uint_least8_t ulong2asc_revhex(char* buf, prnf_ulong_t il)
+{
+	uint_least8_t digit_count = 0;
+	static const char hex_digits[17] = "0123456789ABCDEF";
+	unsigned int i;
+	#define to_digit(x) (hex_digits[(x)])
+	ulong2asc_base(buf, il, 16);
+	#undef to_digit
 	return digit_count;
 }
 
