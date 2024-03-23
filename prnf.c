@@ -60,12 +60,14 @@
 		typedef float prnf_float_t;
 	#endif
 
+	#define HEX_DIGITS_STRING	"0123456789ABCDEF"
+
 	#if PRNF_ULONG_MAX == 4294967295U
-		#define INT_BUF_SIZE 	32
+		#define INT_BUF_SIZE 	10
 		#define FLOAT_PREC_MAX	9
 		#define LONG_IS_32
 	#elif PRNF_ULONG_MAX == 18446744073709551615U
-		#define INT_BUF_SIZE 	64
+		#define INT_BUF_SIZE 	20
 		#define FLOAT_PREC_MAX	19
 	#else
 		#ifdef PRNF_SUPPORT_LONG_LONG
@@ -213,7 +215,8 @@
 	static const char* print_col_alignment(struct out_struct* out_info, const char* fmtstr, bool is_pgm);
 #endif
 
-	static void print_int(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value);
+	static void print_hex_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value);
+	static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue);
 
 #ifdef PRNF_SUPPORT_FLOAT
 	static void print_float(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_float_t value, char postpend);
@@ -623,9 +626,10 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 		struct eng_struct eng;
 	#endif
 
-	if(is_type_int(placeholder->type))
-		print_int(out_info, placeholder, varg.prnf_l);
-
+	if(placeholder->type == TYPE_INT || placeholder->type == TYPE_UINT || placeholder->type == TYPE_HEX)
+		print_hex_dec(out_info, placeholder, varg.prnf_l);
+	else if(placeholder->type == TYPE_BIN)
+		print_bin(out_info, placeholder, varg.prnf_ul);
 #ifdef PRNF_SUPPORT_FLOAT
 	else if(placeholder->type == TYPE_FLOAT)
 		print_float(out_info, placeholder, varg.f, NO_PREFIX);
@@ -655,8 +659,8 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 	#endif
 }
 
-//Handles both signed and unsigned integers
-static void print_int(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value)
+//Handles both signed and unsigned integers, and hex 
+static void print_hex_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value)
 {
 	prnf_ulong_t uvalue;
 	int number_len = 1;
@@ -679,9 +683,7 @@ static void print_int(struct out_struct* out_info, struct placeholder_struct* pl
 			sign_char = placeholder->sign_pad;
 	};
 
-	if(placeholder->type == TYPE_BIN)
-		number_len = ulong2asc_revbin(txt, uvalue);
-	else if(placeholder->type == TYPE_HEX)
+	if(placeholder->type == TYPE_HEX)
 		number_len = ulong2asc_revhex(txt, uvalue);
 	else 
 		number_len = ulong2asc_revdec(txt, uvalue);
@@ -714,6 +716,44 @@ static void print_int(struct out_struct* out_info, struct placeholder_struct* pl
 
 	//postpad number length to satisfy width  (if specified)
 	postpad(out_info, placeholder, number_len);
+}
+
+static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
+{
+	int number_len = 0;
+	int zero_pad_len = 0;
+	prnf_ulong_t temp_ulong = uvalue;
+	prnf_ulong_t bit = 0;
+	int precision = 1;
+
+	while(temp_ulong)
+	{
+		number_len++;
+		temp_ulong >>= 1;
+	};
+
+	if(placeholder->prec_specified)
+		precision = placeholder->prec;
+	
+	if(precision > number_len)
+		zero_pad_len = precision - number_len;
+ 
+	//prepad number length to satisfy width  (if specified)
+	prepad(out_info, placeholder, number_len + zero_pad_len);
+
+	while(zero_pad_len--)
+		out_char(out_info, '0');
+
+	if(number_len)
+		bit = (prnf_ulong_t)1 << (number_len-1);
+	while(bit)
+	{
+		out_char(out_info, (uvalue & bit) ? '1':'0');
+		bit >>= 1;
+	};
+
+	//postpad number length to satisfy width  (if specified)
+	postpad(out_info, placeholder, number_len + zero_pad_len);
 }
 
 #ifdef PRNF_SUPPORT_FLOAT
@@ -957,6 +997,7 @@ static void prepad(struct out_struct* out_info, struct placeholder_struct* place
 {
 	int pad_len = 0;
 	char pad_char = ' ';
+	bool ignore_zero_flag = (placeholder->prec_specified && is_type_int(placeholder->type));
 
 	if(is_centered_string(placeholder) && source_len < placeholder->width)
 		pad_len = (placeholder->width - source_len)/2;
@@ -966,10 +1007,8 @@ static void prepad(struct out_struct* out_info, struct placeholder_struct* place
 		pad_len = placeholder->width - source_len;
 
 	// prepad character of '0' is specified for a numeric type
-	if(is_type_numeric(placeholder->type) && placeholder->flag_zero)
-		//(the zero flag is ignored if precision is specified for an integer type).
-		if(!(placeholder->prec_specified && is_type_int(placeholder->type)))
-			pad_char = '0';
+	if(is_type_numeric(placeholder->type) && placeholder->flag_zero && !ignore_zero_flag)
+		pad_char = '0';
 
 	while(pad_len--)
 		out_char(out_info, pad_char);
@@ -1136,22 +1175,11 @@ static uint_least8_t ulong2asc_revdec(char* buf, prnf_ulong_t il)
 	return digit_count;
 }
 
-//convert prnf_ulong_t to binary reversed
-static uint_least8_t ulong2asc_revbin(char* buf, prnf_ulong_t il)
-{
-	uint_least8_t digit_count = 0;
-	unsigned int i;
-	#define to_digit(x) ('0'+(x))
-	ulong2asc_base(buf, il, 2);
-	#undef to_digit
-	return digit_count;
-}
-
 //convert prnf_ulong_t to hex reversed
 static uint_least8_t ulong2asc_revhex(char* buf, prnf_ulong_t il)
 {
 	uint_least8_t digit_count = 0;
-	static const char hex_digits[17] = "0123456789ABCDEF";
+	static const char hex_digits[sizeof(HEX_DIGITS_STRING)] = HEX_DIGITS_STRING;
 	unsigned int i;
 	#define to_digit(x) (hex_digits[(x)])
 	ulong2asc_base(buf, il, 16);
