@@ -57,9 +57,8 @@
 
  [.precision]
 
-     For float %f, this is the number of fractional digits after the '.', valid range is .0 - .8
-    For decimal integers, this will prepend 0's (if needed) until the total number of digits equals .precision
-    For binary and hex, this specifies the *exact* number of digits to print, default is based on the argument size.
+    For float %f, this is the number of fractional digits after the '.', valid range is .0 - .8
+    For integers, this will prepend 0's (if needed) until the total number of digits equals .precision
     For strings %s %S, This is the maximum number of characters to read from the source.
 
     If precision is specified as .* A dynamic precision must be provided as int argument preceding the argument to be formatted.
