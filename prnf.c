@@ -616,6 +616,10 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 	};
 	fmtstr++;
 
+	//ignore zero flag for int types when precision is specified
+	if(placeholder.prec_specified && is_type_int(placeholder.type))
+		placeholder.flag_zero = false;
+
 	*dst = placeholder;
 	return fmtstr;
 }
@@ -670,7 +674,6 @@ static void print_hex_dec(struct out_struct* out_info, struct placeholder_struct
 	char txt[INT_BUF_SIZE];
 	char* txt_ptr;
 	bool sign_char_already_output = 0;
-	bool ignore_zero_flag = (placeholder->prec_specified && is_type_int(placeholder->type));
 
 	if(is_type_unsigned(placeholder->type))
 		uvalue = (prnf_ulong_t)value;
@@ -700,7 +703,7 @@ static void print_hex_dec(struct out_struct* out_info, struct placeholder_struct
 	field_size = number_len + zero_pad_len + !!sign_char;
 
 	//If there will be a sign character, and width prepadding is with '0', output the sign character first
-	if(sign_char && placeholder->flag_zero && !ignore_zero_flag)
+	if(sign_char && placeholder->flag_zero)
 	{
 		out_char(out_info, sign_char);
 		sign_char_already_output = true;
@@ -813,6 +816,7 @@ static void print_float_normal(struct out_struct* out_info, struct placeholder_s
 	char sign_char;
 	char txt[INT_BUF_SIZE];
 	char* txt_ptr;
+	bool sign_char_already_output = false;
 
 	sign_char = determine_sign_char_of_float(placeholder, value);
 
@@ -847,10 +851,17 @@ static void print_float_normal(struct out_struct* out_info, struct placeholder_s
 	if(postpend && uvalue)		//+1 for engineering notaion?
 		number_len++;
 
+	//If there will be a sign character, and width prepadding is with '0', output the sign character first
+	if(sign_char && placeholder->flag_zero)
+	{
+		out_char(out_info, sign_char);
+		sign_char_already_output = true;
+	};
+
 	//prepad number length to satisfy width  (if specified)
 	prepad(out_info, placeholder, number_len);
 
-	if(sign_char)
+	if(sign_char && !sign_char_already_output)
 		out_char(out_info, sign_char);
 	
 	do
@@ -1002,7 +1013,6 @@ static void prepad(struct out_struct* out_info, struct placeholder_struct* place
 {
 	int pad_len = 0;
 	char pad_char = ' ';
-	bool ignore_zero_flag = (placeholder->prec_specified && is_type_int(placeholder->type));
 
 	if(is_centered_string(placeholder) && source_len < placeholder->width)
 		pad_len = (placeholder->width - source_len)/2;
@@ -1012,7 +1022,7 @@ static void prepad(struct out_struct* out_info, struct placeholder_struct* place
 		pad_len = placeholder->width - source_len;
 
 	// prepad character of '0' is specified for a numeric type
-	if(is_type_numeric(placeholder->type) && placeholder->flag_zero && !ignore_zero_flag)
+	if(is_type_numeric(placeholder->type) && placeholder->flag_zero)
 		pad_char = '0';
 
 	while(pad_len--)
