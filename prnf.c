@@ -806,7 +806,7 @@ static void print_float_normal(struct out_struct* out_info, struct placeholder_s
 	uint_least8_t radix_pos = -1;
 	prnf_ulong_t uvalue;
 	char sign_char;
-	char txt[DEC_BUF_SIZE];
+	char txt[INT_BUF_SIZE];
 	char* txt_ptr;
 
 	sign_char = determine_sign_char_of_float(placeholder, value);
