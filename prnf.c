@@ -663,11 +663,14 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 static void print_hex_dec(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_long_t value)
 {
 	prnf_ulong_t uvalue;
-	int number_len = 1;
+	int number_len;
+	int field_size; 		// (number digits + 0 padding for precision + sign character)
 	int zero_pad_len = 0;
 	char sign_char = 0;
 	char txt[INT_BUF_SIZE];
 	char* txt_ptr;
+	bool sign_char_already_output = 0;
+	bool ignore_zero_flag = (placeholder->prec_specified && is_type_int(placeholder->type));
 
 	if(is_type_unsigned(placeholder->type))
 		uvalue = (prnf_ulong_t)value;
@@ -690,21 +693,23 @@ static void print_hex_dec(struct out_struct* out_info, struct placeholder_struct
 
 	txt_ptr = &txt[number_len];
 
-	//if more digits required, determine amount of zero padding
+	//if more digits required, determine amount of zero padding to meet precision
 	if(placeholder->prec_specified && placeholder->prec > number_len)
 		zero_pad_len = placeholder->prec - number_len;
  
-	//number length is now digits needed + zero padding
-	number_len += zero_pad_len;
+	field_size = number_len + zero_pad_len + !!sign_char;
 
-	//number length is now digits needed + zero padding + sign char (if any)
-	if(sign_char)
-		number_len++;
+	//If there will be a sign character, and width prepadding is with '0', output the sign character first
+	if(sign_char && placeholder->flag_zero && !ignore_zero_flag)
+	{
+		out_char(out_info, sign_char);
+		sign_char_already_output = true;
+	};
 
 	//prepad number length to satisfy width  (if specified)
-	prepad(out_info, placeholder, number_len);
+	prepad(out_info, placeholder, field_size);
 
-	if(sign_char)
+	if(sign_char && !sign_char_already_output)
 		out_char(out_info, sign_char);
 	while(zero_pad_len--)
 		out_char(out_info, '0');
@@ -715,7 +720,7 @@ static void print_hex_dec(struct out_struct* out_info, struct placeholder_struct
 	}while(txt_ptr != txt);
 
 	//postpad number length to satisfy width  (if specified)
-	postpad(out_info, placeholder, number_len);
+	postpad(out_info, placeholder, field_size);
 }
 
 static void print_bin(struct out_struct* out_info, struct placeholder_struct* placeholder, prnf_ulong_t uvalue)
