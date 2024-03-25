@@ -174,6 +174,26 @@ SUITE(suite_floats)
 	RUN_TEST(test_e);
 }
 
+SUITE(output_types)
+{
+	RUN_TEST(test_def_out);
+	RUN_TEST(test_fptr_out);
+	RUN_TEST(test_snprnf_limit);
+	RUN_TEST(test_snappf);
+}
+
+SUITE(dynamic_width_prec)
+{
+	RUN_TEST(test_str_dyn);
+	RUN_TEST(test_i_dyn);
+}
+
+SUITE(special)
+{
+	RUN_TEST(test_col_align);
+	RUN_TEST(test_ext);
+}
+
 TEST test_str(void)
 {
 	int count = ITERATIONS;
@@ -372,6 +392,118 @@ TEST test_e(void)
 	ASSERT_STR_EQ(" 000000003.710M", buf_prnf);
 	snprnf(buf_prnf, BUF_SIZE, "%e", 3.710E12);
 	ASSERT_STR_EQ("3.710T", buf_prnf);
+	PASS();
+}
+
+TEST test_def_out(void)
+{
+	int i;
+	prnf_out_fptr = prnf_putch_default;
+	default_prnf_out_ptr = buf_prnf;
+	memset(buf_prnf, 0x7F, BUF_SIZE);
+	i = prnf("0123456789");
+	ASSERT_EQ(10, i);
+	ASSERT(!memcmp(buf_prnf, "0123456789", 10));
+	ASSERT(buf_prnf[10] == 0x7F);	// check 0 terminator was NOT written
+	PASS();
+}
+
+TEST test_fptr_out(void)
+{
+	char* ptr = buf_str;
+	int i;
+	memset(buf_str, 0x7F, BUF_SIZE);
+	i = fptrprnf(prnf_putch, &ptr, ".0987654321.");
+	ASSERT_EQ(12, i);
+	ASSERT(!memcmp(buf_str, ".0987654321.", 12));
+	ASSERT(buf_str[12] == 0x7F);	// check 0 terminator was NOT written
+	PASS();
+}
+
+TEST test_snprnf_limit(void)
+{
+	int i;
+	memset(buf_prnf, 0x7F, BUF_SIZE);
+	i = snprnf(buf_prnf, 5, "1234567890");
+	ASSERT_EQ(10, i);
+	ASSERT_STR_EQ("1234", buf_prnf);
+	ASSERT_EQ(0x7F, buf_prnf[5]);
+	buf_prnf[0] = 0x7E;
+	i = snprnf(buf_prnf, 0, "123456789");
+	ASSERT_EQ(9, i);
+	ASSERT_EQ(0x7E, buf_prnf[0]);
+	PASS();
+}
+
+TEST test_snappf(void)
+{
+	int i;
+	strcpy(buf_prnf, "Hello");
+	i = snappf(buf_prnf, BUF_SIZE, " Test");
+	ASSERT_EQ(5, i);
+	ASSERT_STR_EQ("Hello Test", buf_prnf);
+	memset(buf_prnf, 0x7F, BUF_SIZE);
+	strcpy(buf_prnf, "123");
+	i = snappf(buf_prnf, 5, "456");
+	ASSERT_EQ(3, i);
+	ASSERT_STR_EQ("1234", buf_prnf);
+	strcpy(buf_prnf, "123456");
+	i = snappf(buf_prnf, 3, "456");
+	ASSERT_EQ(3, i);
+	ASSERT_STR_EQ("12", buf_prnf);
+	PASS();
+}
+
+TEST test_str_dyn(void)
+{
+	int count = ITERATIONS;
+	int printf_retval;
+	int prnf_retval;
+	bool failed;
+	int width, prec;
+	while(count--)
+	{
+		width = rand()%20;
+		prec = rand()%(width+1);
+		gen_rand_fmt_dyn(buf_fmt);
+		strcat(buf_fmt, "s");
+		gen_rand_str(buf_str, 20);
+		COMPARE_WITH_PRINTF_DYN(buf_fmt, buf_str, width, prec);
+	};
+	PASS();
+}
+
+TEST test_i_dyn(void)
+{
+	int count = ITERATIONS;
+	int i;
+	int printf_retval;
+	int prnf_retval;
+	bool failed;
+	int width, prec;
+	while(count--)
+	{
+		width = rand()%30;
+		prec = rand()%(width+1);
+		gen_rand_fmt_dyn(buf_fmt);
+		strcat(buf_fmt, "i");
+		i = (int)rand_dbl(INT_MIN, INT_MAX);
+		COMPARE_WITH_PRINTF_DYN(buf_fmt, i, width, prec);
+	};
+	PASS();
+}
+
+TEST test_col_align(void)
+{
+	snprnf(buf_prnf, BUF_SIZE, "Hi\v10*There");
+	ASSERT_STR_EQ("Hi********There", buf_prnf);
+	PASS();
+}
+
+TEST test_ext(void)
+{
+	snprnf(buf_prnf, BUF_SIZE, "%n", prext_period(385476351));
+	ASSERT_STR_EQ("12y 81d 12h 45m 51s", buf_prnf);
 	PASS();
 }
 
