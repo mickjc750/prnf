@@ -247,7 +247,7 @@
 	static void out_terminate(struct out_struct* out_info);
 
 	static void print_str(struct out_struct* out_info, struct placeholder_struct* placeholder, const char* str, bool is_pgm);
-	static int prnf_strlen(const char* str, bool is_pgm);
+	static int prnf_strlen(const char* str, bool is_pgm, int max);
 	static int prnf_atoi(const char** fmtstr, bool is_pgm);
 
 	#ifdef PLATFORM_AVR
@@ -303,14 +303,10 @@ int snappf_PX(char* dst, size_t dst_size, const char* fmtstr, ...)
 	va_list va;
 	va_start(va, fmtstr);
 	int chars_written = 0;
-	size_t org_len;
+	int org_len;
 
 	if(dst_size)
-	{
-		org_len = prnf_strlen(dst, false);
-		if(org_len > dst_size-1)
-			org_len = dst_size-1;
-	}
+		org_len = prnf_strlen(dst, false, (int)(dst_size-1));
 	else
 		org_len = 0;
 
@@ -891,7 +887,7 @@ static void print_float_special(struct out_struct* out_info, struct placeholder_
 
 	ph.type = TYPE_STR;
 	ph.prec = 1;	// Must be non-0 or prepad/postpad may center the msg which is not what we want
-	msg_len = prnf_strlen(out_msg, false);
+	msg_len = prnf_strlen(out_msg, false, INT_MAX);
 	if(sign_char)
 		msg_len++;
 
@@ -929,7 +925,7 @@ static void print_str(struct out_struct* out_info, struct placeholder_struct* pl
 	int	source_len;
 	int cnt;
 
-	source_len = prnf_strlen(str, is_pgm);
+	source_len = prnf_strlen(str, is_pgm, INT_MAX);
 
 	if(placeholder->prec_specified && placeholder->prec < source_len && !is_centered_string(placeholder))
 		source_len = placeholder->prec;
@@ -976,14 +972,14 @@ static const char* print_col_alignment(struct out_struct* out_info, const char* 
 }
 #endif
 
-static int prnf_strlen(const char* str, bool is_pgm)
+static int prnf_strlen(const char* str, bool is_pgm, int max)
 {
 	(void)is_pgm;
 	int retval = 0;
 
 	if(str)
 	{
-		while(FMTRD(str))
+		while(FMTRD(str) && retval < max)
 		{
 			str++;
 			retval++;
