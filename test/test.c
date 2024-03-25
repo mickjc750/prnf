@@ -111,6 +111,7 @@ do{																											\
 	TEST test_def_out(void);
 	TEST test_fptr_out(void);
 	TEST test_snprnf_limit(void);
+	TEST test_snappf(void);
 
 	SUITE(dynamic_width_prec);
 	TEST test_str_dyn(void);
@@ -178,6 +179,7 @@ SUITE(output_types)
 	RUN_TEST(test_def_out);
 	RUN_TEST(test_fptr_out);
 	RUN_TEST(test_snprnf_limit);
+	RUN_TEST(test_snappf);
 }
 
 SUITE(dynamic_width_prec)
@@ -430,6 +432,25 @@ TEST test_snprnf_limit(void)
 	i = snprnf(buf_prnf, 0, "123456789");
 	ASSERT_EQ(9, i);
 	ASSERT_EQ(0x7E, buf_prnf[0]);
+	PASS();
+}
+
+TEST test_snappf(void)
+{
+	int i;
+	strcpy(buf_prnf, "Hello");
+	i = snappf(buf_prnf, BUF_SIZE, " Test");
+	ASSERT_EQ(5, i);
+	ASSERT_STR_EQ("Hello Test", buf_prnf);
+	memset(buf_prnf, 0x7F, BUF_SIZE);
+	strcpy(buf_prnf, "123");
+	i = snappf(buf_prnf, 5, "456");
+	ASSERT_EQ(3, i);
+	ASSERT_STR_EQ("1234", buf_prnf);
+	strcpy(buf_prnf, "123456");
+	i = snappf(buf_prnf, 3, "456");
+	ASSERT_EQ(3, i);
+	ASSERT_STR_EQ("12", buf_prnf);
 	PASS();
 }
 
