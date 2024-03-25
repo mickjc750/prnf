@@ -14,6 +14,7 @@
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
  * Optional support for long long types.
  * Optional support for float or double.
+ * Full test suite using Greatest.
  
  * NO exponential form, %e provides SI units (y z a f p n u m - k M G T P E Z Y).
  * NO Octal, %o outputs binary instead, (who wants octal?)
@@ -330,14 +331,6 @@ You can pass your custom strings to any of these functions.
  * Add your own extensions file similar to prext.c and prext.h in this repository.
 
 <br>
-<br>
-
-# Issues
-
-__No test suite__
-
- While I do test prnf, I do so with my own ugly test that I don't want to publish here. It would be nice to have something publicly available. I'm open to suggestions as to what the best test framework is for C projects. Perhaps https://github.com/silentbicycle/greatest ?
-
 <br>
 
 Please raise an issue if you find a bug (unlikely), or even if you find any of the above instructions confusing.
