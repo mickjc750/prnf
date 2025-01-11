@@ -134,7 +134,7 @@ You may also provide a warning handler by defining PRNF_WARN(), which will be ca
 	#include "my_warning_handler.h"
 	#define PRNF_WARN(arg) my_warning_handler(arg)
 
- If you plan to use extensions, you may provide prnf with the means to free heap allocated strings (passed to %n) by defining PRNF_FREE().
+ If you plan to use extensions, you may provide prnf with the means to free heap allocated strings (passed to %n) by defining prnf_free().
  
  	#include <stdlib.h>
 	#define prnf_free(arg) 		free(arg)
