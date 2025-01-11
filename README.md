@@ -135,18 +135,13 @@ On AVR, both the the format string, and string arguments, may be in either ram o
    
 # Default output for prnf()
 
-Create a function which handles a single character, in the following form:
+Create a function which handles a single character, with the following signature and name. Providing this default character handler is optional.
 
-    void my_character_handler(void* x, char c)  
+    void prnf_putch(void* x, char c)  
     {  
-        (void)x;	// As x is not used, this line may be needed to avoid a compiler warning.  
-        // Do stuff here to output character c, ie. write to uart ect.  
+        (void)x;	// As x is not used, this line may be needed to avoid a compiler warning.
+        ... Do stuff here to output character c, ie. write to a uart or lcd.
     }  
-
-  
-Then at the start of your program assign the default prnf() output to the above handler with:
-
-    prnf_out_fptr = my_character_handler;
 
 <br>
 <br>
@@ -190,15 +185,15 @@ The usual functions are available (with print shortened to prn), and return a ch
 # Example debug macro:
 The following is useful for debug/diagnostic and cross platform friendly with AVR:
 
-    #define DBG(_fmtarg, ...) prnf_SL("%S:%.4i - "_fmtarg , PRNF_ARG_SL(__FILE__), __LINE__ ,##__VA_ARGS__)
+    #define DBG(_fmtarg, ...) prnf_SL("%s:%.4i - "_fmtarg , __FILE__, __LINE__ ,##__VA_ARGS__)
 
 Example usage:
 
     DBG("value is %i\n", 51);
 The above will output something like "main.c:0113 - value is 51"
 
-Note that even if you use this on many lines, the __FILE__ string literal will only occur once in the string pool. So it won't eat up all your program memory space.
-The PRNF_ARG_SL() macro simply puts string literals into program memory on AVR targets or RAM on normal targets.
+Note that the \_\_FILE\_\_ string literal should not be placed in PROGMEM. AVR-GCC does not offer string pooling for PROGMEM strings, so using PSTR(\_\_FILE\_\_) on many lines would consume a lot of program memory space.
+
 <br>
 <br>
 
