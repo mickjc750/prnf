@@ -19,8 +19,10 @@
 // Local defines
 //********************************************************************************************************
 
+	void prnf_putch(void* dst, char c);
+
 	#define DBG(_fmtarg, ...)		prnf("\e[32m%n %s:%.4i(%s)\v55 : "_fmtarg"\e[m\n", prext_tstamp("%y.%m.%d-%H:%M:%S"), __FILE__, __LINE__ , __func__,##__VA_ARGS__)
-	#define DBG_ERR(_fmtarg, ...)	fptrprnf(demo_fputch, (void*)stderr, "\e[31m%n %s:%.4i(%s) **ERROR**\v55 : "_fmtarg"\e[m\n", prext_tstamp("%y.%m.%d-%H:%M:%S"), __FILE__, __LINE__, __func__,##__VA_ARGS__)
+	#define DBG_ERR(_fmtarg, ...)	fptrprnf(prnf_putch, (void*)stderr, "\e[31m%n %s:%.4i(%s) **ERROR**\v55 : "_fmtarg"\e[m\n", prext_tstamp("%y.%m.%d-%H:%M:%S"), __FILE__, __LINE__, __func__,##__VA_ARGS__)
 
 //********************************************************************************************************
 // Public variables
@@ -34,8 +36,6 @@
 // Private prototypes
 //********************************************************************************************************
 
-	static void demo_fputch(void* dst, char c);
-
 //********************************************************************************************************
 // Public functions
 //********************************************************************************************************
@@ -46,8 +46,6 @@ int main(int argc, const char* argv[])
 	complex float ca = 23.471 + 41.231*I;
 	complex float cb = -18.19 + 9.473*I;
 	complex float cc = ca * cb;
-
-	prnf_out_fptr = &demo_fputch;
 
 	printf("Hello from regular printf()\n");
 	prnf("Hello from prnf()\n\n");
@@ -77,14 +75,15 @@ int main(int argc, const char* argv[])
 	return 0;
 }
 
-//********************************************************************************************************
-// Private functions
-//********************************************************************************************************
-
 // As this is a desktop application, lets have a character handler that can write to a FILE*
-static void demo_fputch(void* dst, char c)
+void prnf_putch(void* dst, char c)
 {
 	if(dst == NULL)
 		dst = stdout;
 	fprintf((FILE*)dst, "%c",c);
 }
+
+//********************************************************************************************************
+// Private functions
+//********************************************************************************************************
+

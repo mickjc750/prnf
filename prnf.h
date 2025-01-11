@@ -236,16 +236,11 @@ See README.md for more info.
 // Public variables
 //********************************************************************************************************
 
-//	Point this at applications character handler for prnf(). The void* parameter is always passed NULL.
-//	This function pointer is not called for terminating null characters.
-//	It may be safely be assigned NULL, if no output from prnf() is required.
-	extern void(*prnf_out_fptr)(void*, char);
-
 //********************************************************************************************************
 // Public prototypes
 //********************************************************************************************************
 
-//	Print, sending characters to prnf_out_fptr() (see above).
+//	Print, passing characters to an application provided prnf_putch(void *ctx, char c), ctx is passed NULL.
 	int prnf(const char* fmtstr, ...) __attribute__((format(printf, 1, 2)));
 
 //	Print to a char* buffer, with no size limit.

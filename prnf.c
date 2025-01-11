@@ -182,12 +182,6 @@
 // Public variables
 //********************************************************************************************************
 
-#ifdef FIRST_PASS
-//	Default character output, may be pointed at an application provided putchar(void*, charx)
-//	The void* is passed a NULL
-	void(*prnf_out_fptr)(void*, char) = NULL;
-#endif
-
 //********************************************************************************************************
 // Private variables
 //********************************************************************************************************
@@ -260,6 +254,14 @@
 // Public functions
 //********************************************************************************************************
 
+#ifdef FIRST_PASS
+	#pragma weak prnf_putch
+void prnf_putch(void *ctx, char c)
+{
+	(void)ctx;
+	(void)c;
+}
+#endif
 
 // On AVR platforms these _PX functions are compiled twice.
 // On the first pass prnf_PX expands to prnf which reads the format string from RAM.
@@ -329,7 +331,7 @@ int fptrprnf_PX(void(*out_fptr)(void*, char), void* out_vars, const char* fmtstr
 
 int vprnf_PX(const char* fmtstr, va_list va)
 {
-	struct out_struct out_info = {.dst_fptr = prnf_out_fptr};
+	struct out_struct out_info = {.dst_fptr = &prnf_putch};
 	return core_prnf(&out_info, fmtstr, IS_SECOND_PASS, va);
 }
 

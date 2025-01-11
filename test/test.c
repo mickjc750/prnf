@@ -126,8 +126,7 @@ do{																											\
 	static void gen_rand_str(char* dst, int size_max);
 	static double rand_dbl(double min, double max);
 
-	static void prnf_putch_default(void* dst, char c);
-	static void prnf_putch(void* dst, char c);
+	static void prnf_custom_putch(void* dst, char c);
 
 //********************************************************************************************************
 // Public functions
@@ -145,6 +144,12 @@ int main(int argc, const char* argv[])
 	GREATEST_MAIN_END();
 
 	return 0;
+}
+
+void prnf_putch(void* dst, char c)
+{
+	(void)dst;
+	*default_prnf_out_ptr++ = c;
 }
 
 //********************************************************************************************************
@@ -398,7 +403,6 @@ TEST test_e(void)
 TEST test_def_out(void)
 {
 	int i;
-	prnf_out_fptr = prnf_putch_default;
 	default_prnf_out_ptr = buf_prnf;
 	memset(buf_prnf, 0x7F, BUF_SIZE);
 	i = prnf("0123456789");
@@ -413,7 +417,7 @@ TEST test_fptr_out(void)
 	char* ptr = buf_str;
 	int i;
 	memset(buf_str, 0x7F, BUF_SIZE);
-	i = fptrprnf(prnf_putch, &ptr, ".0987654321.");
+	i = fptrprnf(prnf_custom_putch, &ptr, ".0987654321.");
 	ASSERT_EQ(12, i);
 	ASSERT(!memcmp(buf_str, ".0987654321.", 12));
 	ASSERT(buf_str[12] == 0x7F);	// check 0 terminator was NOT written
@@ -567,13 +571,7 @@ static double rand_dbl(double min, double max)
 	return min + a*(max - min);
 }
 
-static void prnf_putch_default(void* dst, char c)
-{
-	(void)dst;
-	*default_prnf_out_ptr++ = c;
-}
-
-static void prnf_putch(void* dst, char c)
+static void prnf_custom_putch(void* dst, char c)
 {
 	char** dst_ptr = (char**)dst;
 	if(dst_ptr && *dst_ptr)
