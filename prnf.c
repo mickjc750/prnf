@@ -91,7 +91,7 @@
 	#endif
 
 //	Macro for reading characters from the format string. For AVR we may need to read from PROGMEM or RAM so fmt_rd_either() is used.
-	#ifdef PLATFORM_AVR
+	#ifdef __AVR__
 		#define FMTRD(_fmt) 	fmt_rd_either(_fmt, is_pgm)
 	#else
 		#define FMTRD(_fmt) 	(*(_fmt))
@@ -244,7 +244,7 @@
 	static int prnf_strlen(const char* str, bool is_pgm, int max);
 	static int prnf_atoi(const char** fmtstr, bool is_pgm);
 
-	#ifdef PLATFORM_AVR
+	#ifdef __AVR__
 		static char fmt_rd_either(const char* fmt, bool is_pgm);
 	#endif
 
@@ -361,7 +361,7 @@ int vfptrprnf_PX(void(*out_fptr)(void*, char), void* out_vars, const char* fmtst
 
 #ifdef FIRST_PASS
 
-#ifdef PLATFORM_AVR
+#ifdef __AVR__
 static char fmt_rd_either(const char* fmt, bool is_pgm)
 {
 	return is_pgm? 	pgm_read_byte(fmt):(*fmt);
@@ -590,7 +590,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 #endif
 
 		case 'S' :
-		#ifdef PLATFORM_AVR
+		#ifdef __AVR__
 			placeholder.type = TYPE_PSTR;
 			break;
 		#endif
@@ -648,7 +648,7 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 	else if(placeholder->type == TYPE_STR)
 		print_str(out_info, placeholder, varg.str, IS_NOT_PGM);
 
-	#ifdef PLATFORM_AVR
+	#ifdef __AVR__
 	else if(placeholder->type == TYPE_PSTR)
 		print_str(out_info, placeholder, varg.str, IS_PGM);
 	#endif
@@ -1235,7 +1235,7 @@ static void out_terminate(struct out_struct* out_info)
 
 // Compile _P version for PROGMEM access
 #undef FMTRD
-#ifdef PLATFORM_AVR
+#ifdef __AVR__
 	#ifdef FIRST_PASS
 		#undef FIRST_PASS
 		#undef IS_SECOND_PASS

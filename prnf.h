@@ -25,9 +25,6 @@ Provide column alignment using \v (see readme.md)
 Include a file which may provide configuration for extensions and error handling (see sample).
 	-DPRNF_CFG_FILE=prnf_cfg.h
 
-Build alternate _P versions of functions which read format strings from PROGMEM on AVR targets
-	-DPLATFORM_AVR
-
 
 -------------------------------------------------------------------------------------
 # PRNF
@@ -136,7 +133,7 @@ Another approach is to use GCC's --wrap feature in the compiler flags, which is 
 # Example debug macro:
 The following is useful for debug/diagnostic and cross platform friendly with AVR:
 
-	#define DBG(_fmtarg, ...) prnf_SL("%S:%.4i - "_fmtarg , PRNF_ARG_SL(__FILE__), __LINE__ ,##__VA_ARGS__)
+	#define DBG(_fmtarg, ...) prnf_SL("%s:%.4i - "_fmtarg , __FILE__, __LINE__ ,##__VA_ARGS__)
 
 Example usage:
 
@@ -184,7 +181,7 @@ See README.md for more info.
 	#include <stddef.h>
 
 //	AVR's PSTR
-	#ifdef PLATFORM_AVR
+	#ifdef __AVR__
 	#include <avr/pgmspace.h>
 	#endif
 
@@ -193,7 +190,7 @@ See README.md for more info.
 //********************************************************************************************************
 
 /*
-	PLATFORM_AVR should be defined for AVR targets.
+AVR targets.
 
 	If you have modules that you wish to compile for both AVR and non-AVR targets, you can use the _SL (String Literal) macro wrappers.
 	These will put string literals in PROGMEM for AVR targets only.
@@ -209,7 +206,7 @@ See README.md for more info.
 		prnf_SL("%50S\n", PRNF_ARG_SL("RIGHT"));
 */
 
-#ifdef PLATFORM_AVR
+#ifdef __AVR__
 //	Compiler will first test argument types based on format string, then remove the empty function during optimization.
 	static inline void fmttst_optout(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 	static inline void fmttst_optout(const char* fmt, ...)
@@ -268,7 +265,7 @@ See README.md for more info.
     int vsnappf(char* dst, size_t dst_size, const char* fmtstr, va_list va);
 	int vfptrprnf(void(*out_fptr)(void*, char), void* out_vars, const char* fmtstr, va_list va);
 
-#ifdef PLATFORM_AVR
+#ifdef __AVR__
 	int prnf_P(const char* fmtstr, ...);
 	int sprnf_P(char* dst, const char* fmtstr, ...);
 	int snprnf_P(char* dst, size_t dst_size, const char* fmtstr, ...);
