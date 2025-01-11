@@ -7,15 +7,16 @@
   After some involvement in that project, I realized it would never quite be exactly what I wanted.
  So I wrote this. Some of the ideas used in this are from the authors of that project.
  Particularly the function pointer output from mpaland, and the output wrapping used in this was suggested by eyalroz.
- 
+
+ * Single header (stb style).
  * Thread and re-enterant safe.
- * Low stack & ram usage, zero heap usage.
+ * Low stack & ram usage, zero heap usage (unless extensions are enabled).
  * Full support for AVR's PROGMEM requirements, with almost no cost to non-AVR targets.
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
  * Optional support for long long types.
  * Optional support for float or double.
  * Full test suite using Greatest.
- 
+
  * NO exponential form, %e provides SI units (y z a f p n u m - k M G T P E Z Y).
  * NO Octal, %o outputs binary instead, (who wants octal?)
  * NO adaptive %g %G
@@ -117,9 +118,68 @@
 <br>
 <br>
 
+ # Configuration
+For the minimum default configuration, place the following 2 lines in a single .c file:
+
+    #define PRNF_IMPLEMENTATION
+    #include "prnf.h"
+
+Optionally, you may provide an error handler by defining PRNF_ASSERT(), which will be called if prnf encounters an unsupported or unknown placeholder type (ie. %G). 
+
+	#include <assert.h>
+	#define PRNF_ASSERT(arg) assert(arg)
+
+You may also provide a warning handler by defining PRNF_WARN(), which will be called if prnf encounters an unsupported flag (# or ').
+
+	#include "my_warning_handler.h"
+	#define PRNF_WARN(arg) my_warning_handler(arg)
+
+ If you plan to use extensions, you may provide prnf with the means to free heap allocated strings (passed to %n) by defining PRNF_FREE().
+ 
+ 	#include <stdlib.h>
+	#define prnf_free(arg) 		free(arg)
+
+See the example prnf.c files in either the demo or test folder.
+<br>
+<br>
+
+# Build options
+prnf has a number of other build time options, which are enabled by defining symbols, either by adding -DSymbolName to compiler flags, or by defining the symbols in the same .c file containing #define PRNF_IMPLEMENTATION. These options are:
+<br>
+
+Support floating point, provides %f and %e placeholders
+
+	-DPRNF_SUPPORT_FLOAT
+
+Double arguments will not be demoted to float, and prnf will use double arithmetic.
+
+	-DPRNF_SUPPORT_DOUBLE
+
+Support long long
+
+	-DPRNF_SUPPORT_LONG_LONG
+
+Default precision for %e (engineering) notation
+
+	-DPRNF_ENG_PREC_DEFAULT=0
+
+Default precision for %f (floats)
+
+	-DPRNF_FLOAT_PREC_DEFAULT=3
+
+Provide column alignment using \v (see README.md)
+
+	-DPRNF_COL_ALIGNMENT
+
+
+
+
+
+<br>
+<br>
+
  # AVR's PROGMEM support:
-The symbol PLATFORM_AVR must be defined, either before including prnf.h, or preferably by adding -DPLATFORM_AVR to compiler options.
-prnf.c will #include itself for a second pass, to build the _P versions of the functions.
+On AVR devices prnf.c will #include itself for a second pass, to build the _P versions of the functions.
 If you wish to write code which is cross compatible with AVR and non-AVR, use the _SL (String Literal) macros provided,
 these will place string literals in PROGMEM for AVR targets and produce normal string literals for 'normal' von-newman targets.
 
@@ -132,7 +192,7 @@ On AVR, both the the format string, and string arguments, may be in either ram o
    
 <br>
 <br>
-   
+
 # Default output for prnf()
 
 Create a function which handles a single character, with the following signature and name. Providing this default character handler is optional.
@@ -161,7 +221,7 @@ If you have specific information to pass to your character handler, you can pass
 <br>
 <br>
 
-# Replacing printf()
+# Overriding printf()
 
 Firstly, I would advise NOT doing this. Another reader of your code may see printf() and expect it to behave exactly like the standard printf(). If you return to your code to make changes in 5 years, that other programmer may be you.
 
@@ -273,8 +333,6 @@ Will yield:
 
 # Extending prnf
 
-__THE FOLLOWING FEATURE IS DISABLED BY DEFAULT DUE TO HEAP INTERACTION__
-
  Most applications need to print things beyond what is offered by the standard placeholder types. This feature provides an easy way of doing that, but it requires the heap (or some other dynamic memory allocator) to work.
 
  When enabled, prnf() will accept a %n as a C string (like %s), only it will free() the address after printing. The argument type is int*, even though it points to a string. This allows the user to create functions which produce whatever strings they need (coordinates, timestamps, etc..), and then use these functions as arguments to prnf(). Example:
@@ -297,10 +355,22 @@ __THE FOLLOWING FEATURE IS DISABLED BY DEFAULT DUE TO HEAP INTERACTION__
     prnf("Gorilla Fred has %n and Uncle Bob has %n\n", prext_bananas(freds_bananas), prext_bananas(bobs_bananas));
 
 As these functions need to return an int* to a string on the heap, their name should indicate that their sole purpose is
- to provide arguments to prnf() for %n placeholders.
+ to provide arguments to prnf() for %n placeholders. The name prefix of prext_ is suggested.
 Note that if you mistakenly mix up %s and %n, you will get a compilation warning (a good thing), as %s expects a char* and %n expects an int*
 
 <br>
+
+# How to enable extensions
+
+To enable extensions, provide prnf() with the prnf_free() function needed to free the strings. This is done in the .c file continaing #define PRNF_IMPLEMENTATION (see configuration above). Example:
+
+ 	#include <stdlib.h>
+	#define prnf_free(arg) 		free(arg)
+    
+    #define PRNF_IMPLEMENTATION
+    #include "prnf.h"
+
+
 <br>
 
 # Questions regarding extensions:
@@ -319,11 +389,7 @@ You can pass your custom strings to any of these functions.
 <br>
 <br>
 
-# How to enable extensions
 
- * Create a configuration file similar to prnf_cfg.h in this repository.
- * Add -DPRNF_CFG_FILE=prnf_cfg.h to compiler flags, avoiding spaces around the =
- * Add your own extensions file similar to prext.c and prext.h in this repository.
 
 <br>
 <br>

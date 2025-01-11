@@ -16,18 +16,10 @@
 
 	#include "prnf.h"
 
-//	Include the configuration file PRNF_CFG_FILE (see prnf.h)
-	#define prnfcfg_xstr(s) prnfcfg_str(s)
-	#define prnfcfg_str(s) #s
-	#include prnfcfg_xstr(PRNF_CFG_FILE)
-
-	#ifndef PRNF_SUPPORT_EXTENSIONS
-	#error You are compiling prext.c (prnf extensions), but have not enabled extensions in your config file.
-	#endif
-
-	#ifndef prnf_malloc
-	#error You are compiling prext.c (prnf extensions), but have not configured a memory allocator in your config file.
-	#endif
+	#include <stdlib.h>
+	#include <assert.h>
+	#define prext_malloc(arg) 	malloc(arg)
+	#define PREXT_ASSERT(arg) 	assert(arg)
 
 //********************************************************************************************************
 // Public functions
@@ -37,7 +29,7 @@ int* prext_cplex_rec(complex float c)
 {
 	#define TXT_SIZE sizeof("(1234567890.1234567890, 1234567890.1234567890)")
 
-	char* txt = prnf_malloc(TXT_SIZE);
+	char* txt = prext_malloc(TXT_SIZE);
 	snprnf(txt, TXT_SIZE, "(%f, %f)", creal(c), cimag(c));
 
 	#undef TXT_SIZE
@@ -48,7 +40,7 @@ int* prext_cplex_pol(complex float c)
 {
 	#define TXT_SIZE sizeof("(1234567890.1234567890 @1234567890.1234567890)")
 	
-	char* txt = prnf_malloc(TXT_SIZE);
+	char* txt = prext_malloc(TXT_SIZE);
 	snprnf(txt, TXT_SIZE, "(%f @%f)", cabsf(c), cargf(c));
 
 	#undef TXT_SIZE
@@ -61,8 +53,8 @@ int* prext_tstamp(const char* fmt)
 	#define TXT_SIZE 100
 
 	time_t tmr = time(NULL);
-	char* txt = prnf_malloc(TXT_SIZE);
-	PRNF_ASSERT(txt);
+	char* txt = prext_malloc(TXT_SIZE);
+	PREXT_ASSERT(txt);
 	txt[0] = 0;
 	strftime(txt, TXT_SIZE, fmt, localtime(&tmr));
 
@@ -74,8 +66,8 @@ int* prext_period(uint32_t seconds)
 {
 	#define TXT_SIZE (sizeof("XXy XXXd XXh XXm XXs "))
 	char* txt;
-	txt = prnf_malloc(TXT_SIZE);
-	PRNF_ASSERT(txt);
+	txt = prext_malloc(TXT_SIZE);
+	PREXT_ASSERT(txt);
 	txt[0] = 0;
 
 	if(seconds >= 31536000)

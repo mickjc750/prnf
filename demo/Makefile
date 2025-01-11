@@ -8,7 +8,7 @@ TARGET = demo
 # List C source files here. (C dependencies are automatically generated.)
 # To exclude certain files in a folder remove the $(wildcard) and 
 # list them seperated by spaces, ie src/main.c src/util.c 
-SRC = $(wildcard *.c) ../prnf.c ../prext.c
+SRC = $(wildcard *.c) 
 
 # List any extra directories to look for include files here.
 #     Each directory must be seperated by a space.
@@ -47,7 +47,6 @@ CFLAGS += -DPRNF_SUPPORT_FLOAT
 CFLAGS += -DPRNF_SUPPORT_DOUBLE
 CFLAGS += -DPRNF_SUPPORT_LONG_LONG
 CFLAGS += -DPRNF_COL_ALIGNMENT
-CFLAGS += -DPRNF_CFG_FILE=../prnf_cfg.h
 
 
 # List any extra directories to look for libraries here.
@@ -91,11 +90,8 @@ GENDEPFLAGS = -MMD -MP -MF .dep/$(@F).d
 ALL_CFLAGS = -I. $(CFLAGS) $(GENDEPFLAGS)
 
 # Default target.
-all: begin gccversion buildinfo build end
-
-
+all: begin gccversion build end
 build: tgt
-
 tgt: $(TARGET)
 
 # Eye candy.
@@ -105,23 +101,12 @@ begin:
 	@echo $(MSG_BEGIN)
 
 end:
-	@cat build_date.inc
 	@echo $(MSG_END)
 	@echo
-
-# Gather information about build
-buildinfo:
-	@$(CC) --version | grep gcc | awk '{print "\x22" $$0 "\x22"}' > gcc_version.inc
-	@date --iso-8601=seconds -u | awk '{print "\x22" $$0 "\x22"}' > build_date.inc
-	@read LASTNUM < build_number.inc;	\
-	NEWNUM=$$(($$LASTNUM + 1));			\
-	echo "$$NEWNUM" > build_number.inc
-	@touch version.c
 
 # Display compiler version information.
 gccversion : 
 	@$(CC) --version
-
 
 # Link: create output file from object files.
 .SECONDARY : $(TARGET)
@@ -145,6 +130,7 @@ clean_list :
 	@echo $(MSG_CLEANING)
 	$(REMOVE) $(SRC:%.c=$(OBJLSTDIR)/%.o)
 	$(REMOVE) $(SRC:%.c=$(OBJLSTDIR)/%.lst)
+	$(REMOVE) $(TARGET)
 	$(REMOVEDIR) .dep
 
 # Create object files directory
@@ -154,4 +140,4 @@ $(shell mkdir $(OBJLSTDIR) 2>/dev/null)
 -include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
 
 # Listing of phony targets.
-.PHONY : all begin end buildinfo gccversion build tgt clean clean_list 
+.PHONY : all begin end gccversion build tgt clean clean_list 
