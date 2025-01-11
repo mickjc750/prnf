@@ -8,7 +8,7 @@ TARGET = demo
 # List C source files here. (C dependencies are automatically generated.)
 # To exclude certain files in a folder remove the $(wildcard) and 
 # list them seperated by spaces, ie src/main.c src/util.c 
-SRC = $(wildcard *.c) ../prnf.c ../prext.c
+SRC = $(wildcard *.c) 
 
 # List any extra directories to look for include files here.
 #     Each directory must be seperated by a space.
@@ -47,7 +47,6 @@ CFLAGS += -DPRNF_SUPPORT_FLOAT
 CFLAGS += -DPRNF_SUPPORT_DOUBLE
 CFLAGS += -DPRNF_SUPPORT_LONG_LONG
 CFLAGS += -DPRNF_COL_ALIGNMENT
-CFLAGS += -DPRNF_CFG_FILE=../prnf_cfg.h
 
 
 # List any extra directories to look for libraries here.

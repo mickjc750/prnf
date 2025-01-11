@@ -8,7 +8,7 @@ TARGET = test
 # List C source files here. (C dependencies are automatically generated.)
 # To exclude certain files in a folder remove the $(wildcard) and 
 # list them seperated by spaces, ie src/main.c src/util.c 
-SRC = $(wildcard ../*.c) $(wildcard *.c)
+SRC = $(wildcard *.c)
 
 # List any extra directories to look for include files here.
 #     Each directory must be seperated by a space.
@@ -38,7 +38,6 @@ CDEFS += -DPRNF_SUPPORT_LONG_LONG
 CDEFS += -DPRNF_ENG_PREC_DEFAULT=3
 CDEFS += -DPRNF_FLOAT_PREC_DEFAULT=6
 CDEFS += -DPRNF_COL_ALIGNMENT
-CDEFS += -DPRNF_CFG_FILE=prnf_cfg.h
 
 #---------------- Compiler Options C ----------------
 #  -g 			 debug information

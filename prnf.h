@@ -305,13 +305,6 @@ AVR targets.
 // Local defines
 //********************************************************************************************************
 
-//	Include configuration file if one has been provided (see prnf.h)
-	#ifdef PRNF_CFG_FILE
-	#define prnfcfg_xstr(s) prnfcfg_str(s)
-	#define prnfcfg_str(s) #s
-	#include prnfcfg_xstr(PRNF_CFG_FILE)
-	#endif
-
 	#ifndef PRNF_ENG_PREC_DEFAULT
 		#define PRNF_ENG_PREC_DEFAULT 0
 	#endif
@@ -888,7 +881,7 @@ static const char* parse_placeholder(struct placeholder_struct* dst, const char*
 			placeholder.type = TYPE_STR;
 			break;
 
-		#ifdef PRNF_SUPPORT_EXTENSIONS
+		#ifdef prnf_free
 		case 'n' :
 			placeholder.type = TYPE_NSTR;
 			break;
@@ -942,7 +935,7 @@ static void print_placeholder(struct out_struct* out_info, union varg_union varg
 	else if(placeholder->type == TYPE_PSTR)
 		print_str(out_info, placeholder, varg.str, IS_PGM);
 	#endif
-	#ifdef PRNF_SUPPORT_EXTENSIONS
+	#ifdef prnf_free
 	else if(placeholder->type == TYPE_NSTR)
 	{
 		print_str(out_info, placeholder, varg.str, IS_NOT_PGM);
