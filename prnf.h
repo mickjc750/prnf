@@ -1,5 +1,4 @@
 /*
-
 -------------------------------------------------------------------------------------
 # BUILD OPTIONS
 The below can be added to compiler flags in the makefile or project configuration.
@@ -19,11 +18,18 @@ Default precision for %e (engineering) notation
 Default precision for %f (floats)
 	-DPRNF_FLOAT_PREC_DEFAULT=3
 
-Provide column alignment using \v (see readme.md)
+Provide column alignment using \v (see README.md)
 	-DPRNF_COL_ALIGNMENT
 
-Include a file which may provide configuration for extensions and error handling (see sample).
-	-DPRNF_CFG_FILE=prnf_cfg.h
+
+Alternatively, may may define a selection of the above symbols in the .c file containing #define PRNF_IMPLEMENTATION before including prnf.h
+
+	#define PRNF_SUPPORT_FLOAT
+	#define PRNF_SUPPORT_DOUBLE
+	#define PRNF_SUPPORT_LONG_LONG
+	#define PRNF_ENG_PREC_DEFAULT 	0
+	#define PRNF_FLOAT_PREC_DEFAULT 3
+	#define PRNF_COL_ALIGNMENT
 
 
 -------------------------------------------------------------------------------------
@@ -33,7 +39,8 @@ Include a file which may provide configuration for extensions and error handling
  With some reasonable limitations, and non-standard behavior suited to microcontrollers.
  
  * Thread and re-entrant safe.
- * Low stack & ram usage, zero heap usage.
+ * Single header (stb style).
+ * Low stack & ram usage, zero heap usage (unless extensions are used).
  * Full support for AVR's PROGMEM requirements, with almost no cost to non-AVR targets.
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
  
