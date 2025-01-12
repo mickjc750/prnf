@@ -11,14 +11,14 @@
  * Single header (stb style).
  * Thread and re-enterant safe.
  * Low stack & ram usage, zero heap usage (unless extensions are enabled).
- * Full support for AVR's PROGMEM requirements, with almost no cost to non-AVR targets.
+ * Full support for AVR's PROGMEM requirements.
  * Compatible enough to make use of GCC's format and argument checking (even for AVR).
  * Optional support for long long types.
  * Optional support for float or double.
  * Full test suite using Greatest.
 
  * NO exponential form, %e provides SI units (y z a f p n u m - k M G T P E Z Y).
- * NO Octal, %o outputs binary instead, (who wants octal?)
+ * NO Octal, %o outputs binary instead.
  * NO adaptive %g %G
  
  If you're a linux user, for a demonstration you can type 'make' then './demo' in the /demo folder.
@@ -144,32 +144,32 @@ See the example prnf.c files in either the demo or test folder.
 <br>
 
 # Build options
-prnf has a number of other build time options, which are enabled by defining symbols, either by adding -DSymbolName to compiler flags, or by defining the symbols in the same .c file containing #define PRNF_IMPLEMENTATION. These options are:
+prnf has the following build options, which are enabled by defining symbols, either by adding -DSymbolName to compiler flags, or by defining the symbols in the same .c file containing #define PRNF_IMPLEMENTATION. These options are:
 <br>
 
 Support floating point, provides %f and %e placeholders
 
-	-DPRNF_SUPPORT_FLOAT
+	PRNF_SUPPORT_FLOAT
 
 Double arguments will not be demoted to float, and prnf will use double arithmetic.
 
-	-DPRNF_SUPPORT_DOUBLE
+	PRNF_SUPPORT_DOUBLE
 
 Support long long
 
-	-DPRNF_SUPPORT_LONG_LONG
+	PRNF_SUPPORT_LONG_LONG
 
 Default precision for %e (engineering) notation
 
-	-DPRNF_ENG_PREC_DEFAULT=0
+	PRNF_ENG_PREC_DEFAULT=0
 
 Default precision for %f (floats)
 
-	-DPRNF_FLOAT_PREC_DEFAULT=3
+	PRNF_FLOAT_PREC_DEFAULT=3
 
-Provide column alignment using \v (see README.md)
+Provide column alignment using \v
 
-	-DPRNF_COL_ALIGNMENT
+	PRNF_COL_ALIGNMENT
 
 
 
@@ -214,23 +214,13 @@ A non-standard function is available which can be used for stream-like printing 
 
 So to print to the above example of my_character_handler:
 
-    fptrprnf(mycharacter_handler, NULL, "Hello Fred is %i years old\n", freds_age);
+    fptrprnf(prnf_putch, NULL, "Hello Fred is %i years old\n", freds_age);
 
 If you have specific information to pass to your character handler, you can pass the address of it instead of NULL, and it will be passed to the void* x in my_character_handler.
 
 <br>
 <br>
 
-# Overriding printf()
-
-Firstly, I would advise NOT doing this. Another reader of your code may see printf() and expect it to behave exactly like the standard printf(). If you return to your code to make changes in 5 years, that other programmer may be you.
-
-If you still intend to override printf() this can be done with macros. Be aware that after you define 'printf' you will break anything which tries to add the format checking attribute __attribute__((format(printf, 1, 2)))
-
-Another approach is to use GCC's --wrap feature in the compiler flags, which is probably better.
-
-<br>
-<br>
 
 # Printing to text buffers
 
@@ -299,7 +289,7 @@ This is useful in situations where you may need to iterate through a number of f
 # Column alignment
 
 
-To enable this feature put -DPRNF_COL_ALIGNMENT in your compiler flags<br>
+To enable this feature put -DPRNF_COL_ALIGNMENT in your compiler flags, or #define PRNF_COL_ALIGNMENT in the same file as #define PRNF_IMPLEMENTATION<br>
 
 It is possible to advance output to a specific column, with respect to the start of the output, or the last line ending. To achieve this prnf hijacks the \v (vertical tab) character.<br>
 The required format is:
@@ -362,7 +352,7 @@ Note that if you mistakenly mix up %s and %n, you will get a compilation warning
 
 # How to enable extensions
 
-To enable extensions, provide prnf() with the prnf_free() function needed to free the strings. This is done in the .c file continaing #define PRNF_IMPLEMENTATION (see configuration above). Example:
+To enable extensions, provide prnf() with the prnf_free() function needed to free the strings. This is done in the .c file containing #define PRNF_IMPLEMENTATION (see configuration above). Example:
 
  	#include <stdlib.h>
 	#define prnf_free(arg) 		free(arg)
