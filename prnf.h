@@ -1068,7 +1068,7 @@ static void print_float(struct out_struct* out_info, struct placeholder_struct* 
 // Return FLOAT_CASE_x
 static const char* determine_float_msg(struct placeholder_struct* placeholder, prnf_float_t value)
 {
-	char* retval = NULL;
+	const char* retval = NULL;
 	int prec;
 
 	if(value < 0.0F)
