@@ -21,8 +21,8 @@
 
 	void prnf_putch(void* dst, char c);
 
-	#define DBG(_fmtarg, ...)		prnf("\e[32m%n %s:%.4i(%s)\v55 : "_fmtarg"\e[m\n", prext_tstamp("%y.%m.%d-%H:%M:%S"), __FILE__, __LINE__ , __func__,##__VA_ARGS__)
-	#define DBG_ERR(_fmtarg, ...)	fptrprnf(prnf_putch, (void*)stderr, "\e[31m%n %s:%.4i(%s) **ERROR**\v55 : "_fmtarg"\e[m\n", prext_tstamp("%y.%m.%d-%H:%M:%S"), __FILE__, __LINE__, __func__,##__VA_ARGS__)
+	#define DBG(_fmtarg, ...)		prnf("\e[32m%n %s:%.4i(%s)\v55 : "_fmtarg"\e[m\n", prext_tstamp(PREXT_ISO8601,time(NULL)), __FILE__, __LINE__ , __func__,##__VA_ARGS__)
+	#define DBG_ERR(_fmtarg, ...)	fptrprnf(prnf_putch, (void*)stderr, "\e[31m%n %s:%.4i(%s) **ERROR**\v55 : "_fmtarg"\e[m\n", prext_tstamp(PREXT_ISO8601,time(NULL)), __FILE__, __LINE__, __func__,##__VA_ARGS__)
 
 //********************************************************************************************************
 // Public variables
@@ -46,6 +46,7 @@ int main(int argc, const char* argv[])
 	complex float ca = 23.471 + 41.231*I;
 	complex float cb = -18.19 + 9.473*I;
 	complex float cc = ca * cb;
+	time_t t = time(NULL);
 
 	printf("Hello from regular printf()\n");
 	prnf("Hello from prnf()\n\n");
@@ -63,7 +64,7 @@ int main(int argc, const char* argv[])
 
 	prnf("%%e for engineering notation, example voltages : %eV %eV %eV %eV %eV\n\n\n", 75E-6, 981E-3, 34.0, 281E3, 48E6);
 
-	prnf("The current time is %n, which is around %n after the unix epoc\n\n", prext_tstamp("%y.%m.%d-%H:%M:%S"), prext_period((uint32_t)time(NULL)));
+	prnf("The current time is %n, which is around %n after the unix epoc\n\n", prext_tstamp(PREXT_ISO8601, t), prext_period((uint32_t)t));
 
 	prnf("\v10-Column 10\n\v20*Column 20\n\v30~Column 30\n\n\n");
 

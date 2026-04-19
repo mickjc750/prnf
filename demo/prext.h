@@ -26,12 +26,18 @@
 	#include <stdint.h>
 	#include <complex.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //********************************************************************************************************
 // Public prototypes
 //********************************************************************************************************
 
+	#define PREXT_ISO8601 "%Y-%m-%dT%H:%M:%S%z"
+
 //	Formatted time stamp using strftime()
-	int* prext_tstamp(const char* fmt);
+	int* prext_tstamp(const char* fmt, time_t t);
 
 //	Describe period in the form XXy XXd XXh XXm XXs
 	int* prext_period(uint32_t seconds);
@@ -42,4 +48,8 @@
 //	Complex number in polar form (radians)
 	int* prext_cplex_pol(complex float c);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif // _PRNF_H_

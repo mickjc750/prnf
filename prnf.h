@@ -192,6 +192,10 @@ See README.md for more info.
 	#include <avr/pgmspace.h>
 	#endif
 
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+
 //********************************************************************************************************
 // Public defines
 //********************************************************************************************************
@@ -285,6 +289,9 @@ AVR targets.
 	int vfptrprnf_P(void(*out_fptr)(void*, char), void* out_vars, const char* fmtstr, va_list va);
 #endif
 
+#ifdef __cplusplus
+}
+#endif
 #endif // _PRNF_H_
 
 

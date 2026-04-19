@@ -47,16 +47,14 @@ int* prext_cplex_pol(complex float c)
 	return (int*)txt;
 }
 
-// fmt example "%y.%m.%d-%H:%M:%S"
-int* prext_tstamp(const char* fmt)
+int* prext_tstamp(const char* fmt, time_t t)
 {
 	#define TXT_SIZE 100
 
-	time_t tmr = time(NULL);
 	char* txt = prext_malloc(TXT_SIZE);
 	PREXT_ASSERT(txt);
 	txt[0] = 0;
-	strftime(txt, TXT_SIZE, fmt, localtime(&tmr));
+	strftime(txt, TXT_SIZE, fmt, localtime(&t));
 
 	#undef TXT_SIZE
 	return (int*)txt;
